@@ -1,0 +1,64 @@
+# --- Node / Package Manager ---
+node_modules
+.pnp
+.pnp.*
+pnpm-lock.yaml
+yarn.lock
+package-lock.json
+
+
+# --- Build Artifacts ---
+dist
+build
+lib
+.esm
+.cjs
+.mjs
+.turbo
+.next
+out
+storybook-static
+
+
+# --- Monorepo / Turborepo ---
+turbo
+.turbo
+cache
+.cache
+
+
+# --- Testing ---
+coverage
+reports
+playwright-report
+test-results
+
+
+# --- Environment Files ---
+.env
+.env.*
+.env.local
+
+
+# --- Logs ---
+*.log
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+
+# --- OS / Editor / Metadata Files ---
+.DS_Store
+Thumbs.db
+.idea
+.vscode
+*.swp
+*.swo
+*.tmp
+*.temp
+
+
+# --- TypeScript ---
+*.tsbuildinfo
+*.tsx.snap
