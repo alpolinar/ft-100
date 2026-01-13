@@ -1,7 +1,11 @@
 import cors from "@fastify/cors";
-import { appRouter } from "./trpc";
-import { fastifyTRPCPlugin } from "@trpc/server/adapters/fastify";
+import {
+    type FastifyTRPCPluginOptions,
+    fastifyTRPCPlugin,
+} from "@trpc/server/adapters/fastify";
 import Fastify from "fastify";
+import { type AppRouter, appRouter } from "./trpc";
+import { createContext } from "./trpc/context";
 
 // TODO: replace with env variables
 const allowedOrigins = [
@@ -37,7 +41,11 @@ app.register(fastifyTRPCPlugin, {
     prefix: "/trpc",
     trpcOptions: {
         router: appRouter,
-    },
+        createContext,
+        onError: ({ path, error }) => {
+            console.log(`Error in tRPC handler on path '${path}':`, error);
+        },
+    } satisfies FastifyTRPCPluginOptions<AppRouter>["trpcOptions"],
 });
 
 app.get("/", async () => {
