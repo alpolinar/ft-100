@@ -1,4 +1,6 @@
 import cors from "@fastify/cors";
+import { appRouter } from "./trpc";
+import { fastifyTRPCPlugin } from "@trpc/server/adapters/fastify";
 import Fastify from "fastify";
 
 // TODO: replace with env variables
@@ -7,11 +9,11 @@ const allowedOrigins = [
     "http://127.0.0.1:3000",
 ];
 
-const fastify = Fastify({
+const app = Fastify({
     logger: true,
 });
 
-fastify.register(cors, {
+app.register(cors, {
     origin: (origin, callback) => {
         // Allow no origin (e.g., mobile apps, curl, Postman)
         if (!origin) return callback(null, true);
@@ -31,17 +33,24 @@ fastify.register(cors, {
     maxAge: 86400, // cache preflight for 1 da
 });
 
-fastify.get("/", async () => {
+app.register(fastifyTRPCPlugin, {
+    prefix: "/trpc",
+    trpcOptions: {
+        router: appRouter,
+    },
+});
+
+app.get("/", async () => {
     return { message: "hello world" };
 });
 
 (async () => {
     try {
-        await fastify.listen({
+        await app.listen({
             port: 3001,
         });
     } catch (error) {
-        fastify.log.error(error);
+        app.log.error(error);
         process.exit(1);
     }
 })();
