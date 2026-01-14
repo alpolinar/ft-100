@@ -1,8 +1,8 @@
-import { apiRouter } from "./router/api";
+import { userRouter } from "./router/user";
 import { router } from "./trpc";
 
 export const appRouter = router({
-    api: apiRouter,
+    user: userRouter,
 });
 
 export type AppRouter = typeof appRouter;
