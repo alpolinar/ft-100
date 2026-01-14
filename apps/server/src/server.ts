@@ -15,6 +15,9 @@ const allowedOrigins = [
 
 const app = Fastify({
     logger: true,
+    routerOptions: {
+        maxParamLength: 5000,
+    },
 });
 
 app.register(cors, {
@@ -38,7 +41,7 @@ app.register(cors, {
 });
 
 app.register(fastifyTRPCPlugin, {
-    prefix: "/trpc",
+    prefix: "/api",
     trpcOptions: {
         router: appRouter,
         createContext,
