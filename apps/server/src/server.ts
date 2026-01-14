@@ -4,8 +4,8 @@ import {
     fastifyTRPCPlugin,
 } from "@trpc/server/adapters/fastify";
 import Fastify from "fastify";
-import { type AppRouter, appRouter } from "./trpc";
 import { createContext } from "./trpc/context";
+import { type AppRouter, appRouter } from "./trpc/router";
 
 // TODO: replace with env variables
 const allowedOrigins = [

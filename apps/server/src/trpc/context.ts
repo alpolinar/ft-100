@@ -1,9 +1,9 @@
 import type { CreateFastifyContextOptions } from "@trpc/server/adapters/fastify";
 
-export function createContext({ req, res }: CreateFastifyContextOptions) {
+export async function createContext({ req }: CreateFastifyContextOptions) {
     const user = { name: req.headers.username ?? "anonymous" };
 
-    return { res, req, user };
+    return { user };
 }
 
 export type Context = Awaited<ReturnType<typeof createContext>>;

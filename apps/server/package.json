@@ -6,8 +6,8 @@
     "main": "dist/server.js",
     "exports": {
         "./types": {
-            "types": "./dist/trpc/index.d.ts",
-            "default": "./dist/trpc/index.js"
+            "types": "./dist/index.d.ts",
+            "default": "./dist/index.js"
         }
     },
     "scripts": {
