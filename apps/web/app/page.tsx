@@ -1,12 +1,40 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { useTRPC } from "../utils/trpc";
+import { useSubscription } from "@trpc/tanstack-react-query";
+import { useTRPC } from "../lib/trpc";
+import { useMutation } from "@tanstack/react-query";
 
 export default function Home() {
     const trpc = useTRPC();
 
-    const { data, isLoading } = useQuery(trpc.user.queryOptions({ id: 2 }));
+    const gameId: string = "123";
 
-    return <div>{isLoading ? "fetching..." : data?.message}</div>;
+    const makeMoveMutation = trpc.game.makeMove.mutationOptions();
+
+    const onGameUpdate = trpc.game.onGameUpdate.subscriptionOptions(
+        { gameId: "123" },
+        {
+            onData: (event) => {
+                console.log("event", event);
+            },
+        }
+    );
+
+    const makeMove = useMutation(makeMoveMutation);
+
+    const { data: game } = useSubscription(onGameUpdate);
+    console.log("game", game);
+
+    return (
+        <div>
+            <button
+                type="button"
+                onClick={() => {
+                    makeMove.mutate({ gameId, value: 1 });
+                }}
+            >
+                send
+            </button>
+        </div>
+    );
 }

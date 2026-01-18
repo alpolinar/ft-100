@@ -1,5 +1,10 @@
 import { QueryClient } from "@tanstack/react-query";
-import { createTRPCClient, httpBatchLink } from "@trpc/client";
+import {
+    createTRPCClient,
+    httpBatchLink,
+    httpSubscriptionLink,
+    splitLink,
+} from "@trpc/client";
 import { createTRPCContext } from "@trpc/tanstack-react-query";
 import type { AppRouter } from "server/types";
 import superjson from "superjson";
@@ -37,9 +42,16 @@ export function getQueryClient() {
 
 export const client = createTRPCClient<AppRouter>({
     links: [
-        httpBatchLink({
-            url: "http://localhost:3001/api",
-            transformer: superjson,
+        splitLink({
+            condition: (op) => op.type === "subscription",
+            true: httpSubscriptionLink({
+                url: "http://localhost:3001/api",
+                transformer: superjson,
+            }),
+            false: httpBatchLink({
+                url: "http://localhost:3001/api",
+                transformer: superjson,
+            }),
         }),
     ],
 });

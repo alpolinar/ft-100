@@ -1,7 +1,7 @@
 "use client";
 
 import { QueryClientProvider } from "@tanstack/react-query";
-import { client, getQueryClient, TRPCProvider } from "../utils/trpc";
+import { client, getQueryClient, TRPCProvider } from "../lib/trpc";
 
 export function ContextProvider({
     children,
