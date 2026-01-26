@@ -6,17 +6,32 @@ import {
   fastifyTRPCPlugin,
 } from "@trpc/server/adapters/fastify";
 import Fastify from "fastify";
+import { env } from "./env";
 import { createContext } from "./trpc/context";
 import { type AppRouter, appRouter } from "./trpc/router";
 
-// TODO: replace with env variables
 const allowedOrigins = [
-  "http://localhost:3000", // Next.js dev
-  "http://127.0.0.1:3000",
+  env.CLIENT_ORIGIN, // Next.js dev
 ];
 
+const envToLogger = {
+  development: {
+    transport: {
+      target: "pino-pretty",
+      options: {
+        colorize: true,
+        translateTime: "HH:MM:ss Z",
+        ignore: "pid,hostname",
+      },
+    },
+  },
+  staging: true,
+  production: true,
+  test: false,
+};
+
 const app = Fastify({
-  logger: true,
+  logger: envToLogger[env.NODE_ENV] ?? true,
   routerOptions: {
     maxParamLength: 5000,
   },
@@ -53,7 +68,7 @@ app.register(fastifyTRPCPlugin, {
     router: appRouter,
     createContext,
     onError: ({ path, error }) => {
-      console.log(`Error in tRPC handler on path '${path}':`, error);
+      app.log.error(error, `Error in tRPC handler on path '${path}'`);
     },
   } satisfies FastifyTRPCPluginOptions<AppRouter>["trpcOptions"],
 });
@@ -65,10 +80,12 @@ app.get("/", async () => {
 (async () => {
   try {
     await app.listen({
-      port: 3001,
+      port: env.APP_PORT,
     });
+
+    app.log.info(`Server started in port: ${env.APP_PORT}`);
   } catch (error) {
-    app.log.error(error);
+    app.log.error(error, "Server failed to start");
     process.exit(1);
   }
 })();
