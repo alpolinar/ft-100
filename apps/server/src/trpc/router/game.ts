@@ -12,7 +12,7 @@ import {
   type PlayerId,
   PlayerIdSchema,
   type TurnType,
-} from "./game-types";
+} from "./types/game-types";
 
 const games = new Map<string, GameState>();
 

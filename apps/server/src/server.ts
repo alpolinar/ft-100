@@ -58,7 +58,7 @@ app.register(cors, {
 });
 
 app.register(cookie, {
-  secret: "MY_SECRET",
+  secret: env.SECRET,
   parseOption: {},
 } as FastifyCookieOptions);
 
@@ -73,8 +73,8 @@ app.register(fastifyTRPCPlugin, {
   } satisfies FastifyTRPCPluginOptions<AppRouter>["trpcOptions"],
 });
 
-app.get("/", async () => {
-  return { message: "hello world" };
+app.get("/healthcheck", () => {
+  return { message: `hello from the server ${new Date()}` };
 });
 
 (async () => {
@@ -82,7 +82,6 @@ app.get("/", async () => {
     await app.listen({
       port: env.APP_PORT,
     });
-
     app.log.info(`Server started in port: ${env.APP_PORT}`);
   } catch (error) {
     app.log.error(error, "Server failed to start");

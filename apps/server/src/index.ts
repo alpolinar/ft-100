@@ -1,2 +1,2 @@
 export type { AppRouter } from "./trpc/router";
-export * from "./trpc/router/game-types";
+export * from "./trpc/router/types/game-types";
