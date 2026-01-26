@@ -93,6 +93,9 @@ importers:
       superjson:
         specifier: ^2.2.6
         version: 2.2.6
+      ts-pattern:
+        specifier: ^5.9.0
+        version: 5.9.0
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*

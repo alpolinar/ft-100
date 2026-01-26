@@ -21,8 +21,9 @@ type GameState = Readonly<{
   lobbyType: "open" | "invite";
   currentTurn: "p1" | "p2";
   globalValue: number;
-  status: "lobby" | "active" | "finished";
+  status: "lobby" | "countdown" | "active" | "finished";
   winner?: PlayerId;
+  countdown?: number;
   version: number; // optimistic locking
   createdAt: Date;
   updatedAt: Date;
@@ -44,11 +45,13 @@ type MoveCommand = {
   value: number; // 1–10
 };
 
+type GameEventPayload =
+  | { type: "state_updated"; state: GameStateSlim }
+  | { type: "game_finished"; winner: PlayerId };
+
 type GameEvent = {
   kind: "game_event";
-  payload:
-    | { type: "state_updated"; state: GameStateSlim }
-    | { type: "game_finished"; winner: PlayerId };
+  payload: GameEventPayload;
 };
 
 const games = new Map<string, GameState>();
@@ -99,26 +102,78 @@ function applyMove(state: GameState, cmd: MoveCommand): GameState {
   };
 }
 
-function isLobbyFull(players: Players): boolean {
-  return !isEmpty(players.p1) && !isEmpty(players.p2);
+function startCoutdown(game: GameState, duration = 5) {
+  if (game.status !== "lobby" && game.status === "countdown") return;
+
+  games.set(game.id, { ...game, countdown: duration });
+
+  const interval = setInterval(() => {
+    const currentGame = games.get(game.id);
+
+    if (!currentGame) {
+      clearInterval(interval);
+      return;
+    }
+
+    const { countdown } = currentGame;
+
+    if (countdown && countdown > 0) {
+      const newState: GameState = {
+        ...currentGame,
+        status: "countdown",
+      };
+
+      emitGameUpdate({
+        gameId: game.id,
+        payload: {
+          type: "state_updated",
+          state: {
+            id: newState.id,
+            globalValue: newState.globalValue,
+            players: newState.players,
+            status: newState.status,
+            winner: newState.winner,
+            countdown: newState.countdown,
+          },
+        },
+      });
+
+      games.set(currentGame.id, {
+        ...newState,
+        countdown: countdown - 1,
+      });
+    } else {
+      clearInterval(interval);
+
+      const newState: GameState = { ...currentGame, status: "active" };
+
+      games.set(currentGame.id, newState);
+
+      emitGameUpdate({
+        gameId: currentGame.id,
+        payload: {
+          type: "state_updated",
+          state: {
+            id: newState.id,
+            globalValue: newState.globalValue,
+            players: newState.players,
+            status: newState.status,
+            winner: newState.winner,
+            countdown: newState.countdown,
+          },
+        },
+      });
+    }
+  }, 1000);
 }
 
 function emitGameUpdate({
   gameId,
-  data,
-}: Readonly<{ gameId: string; data: GameStateSlim }>) {
-  gameEvents.emit<GameEvent>(`game:${gameId}`, {
+  payload,
+}: Readonly<{ gameId: string; payload: GameEventPayload }>): boolean {
+  return gameEvents.emit<GameEvent>(`game:${gameId}`, {
     kind: "game_event",
-    payload: {
-      type: "state_updated",
-      state: {
-        id: data.id,
-        globalValue: data.globalValue,
-        players: data.players,
-        status: data.status,
-        winner: data.winner,
-      },
-    },
+    payload,
   });
 }
 
@@ -183,44 +238,51 @@ const gameRouter = router({
       const gameState = games.get(input.gameId);
 
       if (!gameState) {
+        throw new Error("No Game Found");
+      }
+
+      const { p1, p2 } = gameState.players;
+
+      if (p1 === currentPlayer || p2 === currentPlayer) {
         return {
-          status: false,
-          message: "No game found",
+          status: true,
+          message: "Player already joined",
         };
       }
 
-      const { lobbyType, invitedPlayerId } = gameState;
-
-      if (isLobbyFull(gameState.players)) {
+      if (!isEmpty(p1) && !isEmpty(p2)) {
         throw new Error("Lobby full");
-      }
-
-      if (lobbyType === "invite" && invitedPlayerId !== currentPlayer) {
-        throw new Error("Cannot join game.");
       }
 
       const newState: GameState = {
         ...gameState,
         players: {
-          p1:
-            gameState.players.p1 === currentPlayer
-              ? currentPlayer
-              : gameState.players.p1,
-          p2: toPlayerId(ctx.user.id),
+          p1: gameState.players.p1,
+          p2: p2 ?? currentPlayer,
         },
-        status: "active",
       };
 
       games.set(input.gameId, newState);
 
+      if (
+        newState.players.p1 &&
+        newState.players.p2 &&
+        newState.status === "lobby"
+      ) {
+        startCoutdown(newState);
+      }
+
       emitGameUpdate({
         gameId: input.gameId,
-        data: {
-          id: newState.id,
-          globalValue: newState.globalValue,
-          players: newState.players,
-          status: newState.status,
-          winner: newState.winner,
+        payload: {
+          type: "state_updated",
+          state: {
+            id: newState.id,
+            globalValue: newState.globalValue,
+            players: newState.players,
+            status: newState.status,
+            winner: newState.winner,
+          },
         },
       });
 
@@ -254,12 +316,15 @@ const gameRouter = router({
 
       emitGameUpdate({
         gameId: input.gameId,
-        data: {
-          id: newState.id,
-          globalValue: newState.globalValue,
-          players: newState.players,
-          status: newState.status,
-          winner: newState.winner,
+        payload: {
+          type: "state_updated",
+          state: {
+            id: newState.id,
+            globalValue: newState.globalValue,
+            players: newState.players,
+            status: newState.status,
+            winner: newState.winner,
+          },
         },
       });
 

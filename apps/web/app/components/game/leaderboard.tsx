@@ -4,11 +4,12 @@ import { useMutation } from "@tanstack/react-query";
 import { debounce } from "moderndash";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { useTRPC } from "../../../lib/trpc";
+import { type RouterInputs, useTRPC } from "../../../lib/trpc";
 
 export default function LeaderBoard() {
   const trpc = useTRPC();
   const router = useRouter();
+  type CreateGameInput = RouterInputs["game"]["createGame"];
 
   const [invitedPlayerId, setInvitedPlayerId] = useState<string>("");
   const [joinGameId, setJoinGameId] = useState<string>("");
@@ -21,9 +22,9 @@ export default function LeaderBoard() {
 
   const debouncedSetGameId = useMemo(() => debounce(setJoinGameId, 300), []);
 
-  const createGame = () => {
+  const createGame = ({ invitedPlayerId, lobbyType }: CreateGameInput) => {
     createGameMutation.mutate(
-      { invitedPlayerId, lobbyType: invitedPlayerId ? "invite" : "open" },
+      { invitedPlayerId, lobbyType },
       {
         onSuccess: (data) => {
           router.push(`/game/${data.id}`);
@@ -60,8 +61,6 @@ export default function LeaderBoard() {
     };
   }, [debouncedSetGameId]);
 
-  console.log("joinGameId", joinGameId);
-
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
       <p>LeaderBoard</p>
@@ -75,7 +74,10 @@ export default function LeaderBoard() {
         <button
           type="button"
           onClick={() => {
-            createGame();
+            createGame({
+              invitedPlayerId,
+              lobbyType: invitedPlayerId ? "invite" : "open",
+            });
           }}
         >
           create game
