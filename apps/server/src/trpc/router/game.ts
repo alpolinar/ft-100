@@ -3,57 +3,17 @@ import z from "zod";
 import { arrayElement } from "../../utils";
 import { createAsyncQueue } from "../async-queue-helper";
 import { protectedProcedure, router } from "../trpc";
-
-const PlayerIdSchema = z.string().brand<"PlayerId">();
-
-type PlayerId = z.infer<typeof PlayerIdSchema>;
-
-type Players = Readonly<{
-  p1: PlayerId;
-  p2?: PlayerId;
-}>;
-
-type GameStateStatus = "lobby" | "countdown" | "active" | "finished";
-
-type LobbyType = "open" | "invite";
-
-type TurnType = "p1" | "p2";
-
-type GameState = Readonly<{
-  id: string;
-  createdBy: PlayerId;
-  invitedPlayerId?: PlayerId;
-  players: Players;
-  lobbyType: LobbyType;
-  currentTurn: TurnType;
-  globalValue: number;
-  status: GameStateStatus;
-  winner?: PlayerId;
-  countdown?: number;
-  version: number; // optimistic locking
-  createdAt: Date;
-  updatedAt: Date;
-}>;
-
-type GameStateSlim = Omit<
+import {
+  GameEvent,
+  GameEventPayload,
   GameState,
-  "createdBy" | "version" | "createdAt" | "updatedAt" | "lobbyType"
->;
-
-type MoveCommand = {
-  gameId: string;
-  playerId: PlayerId;
-  value: number; // 1–10
-};
-
-type GameEventPayload =
-  | { type: "state_updated"; state: GameStateSlim }
-  | { type: "game_finished"; winner: PlayerId };
-
-type GameEvent = {
-  kind: "game_event";
-  payload: GameEventPayload;
-};
+  GameStateSlim,
+  LobbyType,
+  MoveCommand,
+  PlayerId,
+  PlayerIdSchema,
+  TurnType,
+} from "./game-types";
 
 const games = new Map<string, GameState>();
 
