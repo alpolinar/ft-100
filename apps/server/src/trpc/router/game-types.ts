@@ -42,11 +42,7 @@ export type MoveCommand = {
   value: number; // 1–10
 };
 
-export type GameEventPayload =
-  | { type: "state_updated"; state: GameStateSlim }
-  | { type: "game_finished"; winner: PlayerId };
-
 export type GameEvent = {
   kind: "game_event";
-  payload: GameEventPayload;
+  payload: GameStateSlim;
 };

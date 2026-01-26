@@ -58,36 +58,34 @@ export function GameContainer({ gameId }: GameProps) {
     )
   );
 
-  console.log("gameUpdate", localGame);
-
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
       <Link href="/game">leaderboard</Link>
       {match(localGame?.payload)
-        .with({ type: "state_updated" }, (current) => {
-          return match(current.state)
-            .with({ status: "lobby" }, () => {
-              return <p>waiting for other player...</p>;
-            })
-            .with({ status: "countdown" }, (current) => {
-              return <p>{current.countdown}</p>;
-            })
-            .with({ status: "active" }, () => {
-              return <Game onSubmit={makeMove} />;
-            })
-            .with({ status: "finished" }, (current) => {
-              return <p>{JSON.stringify(current)}</p>;
-            })
-            .exhaustive();
-        })
-        .with({ type: "game_finished" }, (current) => {
-          return <p>game finished: {current.winner}</p>;
-        })
-        .with(undefined, () => {
-          return <p>loadding...</p>;
-        })
+        .with({ status: "lobby" }, () => (
+          <p>waiting for ther other player...</p>
+        ))
+        .with({ status: "countdown" }, (current) => <p>{current.countdown}</p>)
+        .with({ status: "active" }, (current) => (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "16px",
+            }}
+          >
+            <p>{current.globalValue}</p>
+            <Game
+              onSubmit={makeMove}
+              currentPlayerId={current.players[current.currentTurn]}
+            />
+          </div>
+        ))
+        .with({ status: "finished" }, (current) => (
+          <p>winner is: {current.winner}</p>
+        ))
+        .with(undefined, () => <p>loading...</p>)
         .exhaustive()}
-      {}
     </div>
   );
 }

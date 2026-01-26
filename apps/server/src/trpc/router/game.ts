@@ -4,15 +4,14 @@ import { arrayElement } from "../../utils";
 import { createAsyncQueue } from "../async-queue-helper";
 import { protectedProcedure, router } from "../trpc";
 import {
-  GameEvent,
-  GameEventPayload,
-  GameState,
-  GameStateSlim,
-  LobbyType,
-  MoveCommand,
-  PlayerId,
+  type GameEvent,
+  type GameState,
+  type GameStateSlim,
+  type LobbyType,
+  type MoveCommand,
+  type PlayerId,
   PlayerIdSchema,
-  TurnType,
+  type TurnType,
 } from "./game-types";
 
 const games = new Map<string, GameState>();
@@ -91,16 +90,13 @@ function startCoutdown(game: GameState, duration = 5) {
       emitGameUpdate({
         gameId: game.id,
         payload: {
-          type: "state_updated",
-          state: {
-            id: newState.id,
-            globalValue: newState.globalValue,
-            players: newState.players,
-            status: newState.status,
-            winner: newState.winner,
-            currentTurn: newState.currentTurn,
-            countdown: newState.countdown,
-          },
+          id: newState.id,
+          globalValue: newState.globalValue,
+          players: newState.players,
+          status: newState.status,
+          winner: newState.winner,
+          currentTurn: newState.currentTurn,
+          countdown: newState.countdown,
         },
       });
 
@@ -118,16 +114,13 @@ function startCoutdown(game: GameState, duration = 5) {
       emitGameUpdate({
         gameId: currentGame.id,
         payload: {
-          type: "state_updated",
-          state: {
-            id: newState.id,
-            globalValue: newState.globalValue,
-            players: newState.players,
-            status: newState.status,
-            winner: newState.winner,
-            currentTurn: newState.currentTurn,
-            countdown: newState.countdown,
-          },
+          id: newState.id,
+          globalValue: newState.globalValue,
+          players: newState.players,
+          status: newState.status,
+          winner: newState.winner,
+          currentTurn: newState.currentTurn,
+          countdown: newState.countdown,
         },
       });
     }
@@ -137,7 +130,7 @@ function startCoutdown(game: GameState, duration = 5) {
 function emitGameUpdate({
   gameId,
   payload,
-}: Readonly<{ gameId: string; payload: GameEventPayload }>): boolean {
+}: Readonly<{ gameId: string; payload: GameStateSlim }>): boolean {
   return gameEvents.emit<GameEvent>(`game:${gameId}`, {
     kind: "game_event",
     payload,
@@ -244,15 +237,12 @@ const gameRouter = router({
       emitGameUpdate({
         gameId: input.gameId,
         payload: {
-          type: "state_updated",
-          state: {
-            id: newState.id,
-            globalValue: newState.globalValue,
-            players: newState.players,
-            status: newState.status,
-            currentTurn: newState.currentTurn,
-            winner: newState.winner,
-          },
+          id: newState.id,
+          globalValue: newState.globalValue,
+          players: newState.players,
+          status: newState.status,
+          currentTurn: newState.currentTurn,
+          winner: newState.winner,
         },
       });
 
@@ -287,15 +277,12 @@ const gameRouter = router({
       emitGameUpdate({
         gameId: input.gameId,
         payload: {
-          type: "state_updated",
-          state: {
-            id: newState.id,
-            globalValue: newState.globalValue,
-            players: newState.players,
-            status: newState.status,
-            currentTurn: newState.currentTurn,
-            winner: newState.winner,
-          },
+          id: newState.id,
+          globalValue: newState.globalValue,
+          players: newState.players,
+          status: newState.status,
+          currentTurn: newState.currentTurn,
+          winner: newState.winner,
         },
       });
 
@@ -323,17 +310,14 @@ const gameRouter = router({
       if (game) {
         queue.push({
           kind: "game_event",
-          payload: {
-            type: "state_updated",
-            state: structuredClone({
-              id: game.id,
-              globalValue: game.globalValue,
-              players: game.players,
-              status: game.status,
-              currentTurn: game.currentTurn,
-              winner: game.winner,
-            }),
-          },
+          payload: structuredClone({
+            id: game.id,
+            globalValue: game.globalValue,
+            players: game.players,
+            status: game.status,
+            currentTurn: game.currentTurn,
+            winner: game.winner,
+          }),
         });
       }
 
