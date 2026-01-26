@@ -1,27 +1,27 @@
-type Resolver<T> = (value: IteratorResult<T>) => void;
+type Resolver<T> = (value: T) => void;
 
 export function createAsyncQueue<T>() {
-    const queue: T[] = [];
-    let resolve: Resolver<T> | null = null;
+  const queue: T[] = [];
+  let resolve: Resolver<T> | null = null;
 
-    return {
-        push(value: T) {
-            if (resolve) {
-                resolve({ value, done: false });
-                resolve = null;
-            } else {
-                queue.push(value);
-            }
-        },
+  return {
+    push(value: T) {
+      if (resolve) {
+        resolve(value);
+        resolve = null;
+      } else {
+        queue.push(value);
+      }
+    },
 
-        async next(): Promise<IteratorResult<T>> {
-            if (queue.length > 0) {
-                return { value: queue.shift()!, done: false };
-            }
+    async next(): Promise<T> {
+      if (queue.length > 0) {
+        return queue.shift()!;
+      }
 
-            return new Promise<IteratorResult<T>>((res) => {
-                resolve = res;
-            });
-        },
-    };
+      return new Promise<T>((res) => {
+        resolve = res;
+      });
+    },
+  };
 }

@@ -1,38 +1,41 @@
 {
-    "name": "server",
-    "version": "0.1.0",
-    "description": "",
-    "private": true,
-    "main": "dist/server.js",
-    "exports": {
-        "./types": {
-            "types": "./dist/index.d.ts",
-            "default": "./dist/index.js"
-        }
-    },
-    "scripts": {
-        "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
-        "build": "tsc -p tsconfig.json",
-        "start": "node dist/server.js",
-        "test": "echo \"Error: no test specified\" && exit 1",
-        "clean": "rm -rf node_modules && rm -rf dist",
-        "format": "biome format --write"
-    },
-    "keywords": [],
-    "author": "",
-    "license": "ISC",
-    "dependencies": {
-        "@fastify/cors": "^11.2.0",
-        "@trpc/server": "^11.8.1",
-        "fastify": "^5.6.2",
-        "superjson": "^2.2.6",
-        "zod": "^4.3.5"
-    },
-    "devDependencies": {
-        "@biomejs/biome": "^2.3.11",
-        "@repo/typescript-config": "workspace:*",
-        "@types/node": "^24.10.7",
-        "ts-node-dev": "^2.0.0",
-        "typescript": "5.9.2"
+  "name": "server",
+  "version": "0.1.0",
+  "description": "",
+  "private": true,
+  "main": "dist/server.js",
+  "exports": {
+    "./types": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     }
+  },
+  "scripts": {
+    "dev": "pnpm build & ts-node-dev --respawn --transpile-only src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "clean": "rm -rf node_modules && rm -rf dist",
+    "format": "biome format --write"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@fastify/cookie": "^11.0.2",
+    "@fastify/cors": "^11.2.0",
+    "@trpc/server": "^11.8.1",
+    "fastify": "^5.6.2",
+    "moderndash": "^4.0.0",
+    "superjson": "^2.2.6",
+    "ts-pattern": "^5.9.0",
+    "zod": "^4.3.5"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.11",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^24.10.7",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "5.9.2"
+  }
 }

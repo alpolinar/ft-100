@@ -5,7 +5,7 @@ import { client, getQueryClient, TRPCProvider } from "../lib/trpc";
 
 export function ContextProvider({
     children,
-}: Readonly<React.PropsWithChildren>) {
+}: Readonly<{ children?: React.ReactNode }>) {
     const queryClient = getQueryClient();
 
     return (
