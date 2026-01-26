@@ -1,6 +1,6 @@
-import { isEmpty } from "moderndash";
 import { EventEmitter } from "node:events";
 import z from "zod";
+import { arrayElement } from "../../utils";
 import { createAsyncQueue } from "../async-queue-helper";
 import { protectedProcedure, router } from "../trpc";
 
@@ -13,15 +13,21 @@ type Players = Readonly<{
   p2?: PlayerId;
 }>;
 
+type GameStateStatus = "lobby" | "countdown" | "active" | "finished";
+
+type LobbyType = "open" | "invite";
+
+type TurnType = "p1" | "p2";
+
 type GameState = Readonly<{
   id: string;
   createdBy: PlayerId;
   invitedPlayerId?: PlayerId;
   players: Players;
-  lobbyType: "open" | "invite";
-  currentTurn: "p1" | "p2";
+  lobbyType: LobbyType;
+  currentTurn: TurnType;
   globalValue: number;
-  status: "lobby" | "countdown" | "active" | "finished";
+  status: GameStateStatus;
   winner?: PlayerId;
   countdown?: number;
   version: number; // optimistic locking
@@ -31,12 +37,7 @@ type GameState = Readonly<{
 
 type GameStateSlim = Omit<
   GameState,
-  | "createdBy"
-  | "version"
-  | "createdAt"
-  | "updatedAt"
-  | "currentTurn"
-  | "lobbyType"
+  "createdBy" | "version" | "createdAt" | "updatedAt" | "lobbyType"
 >;
 
 type MoveCommand = {
@@ -63,9 +64,13 @@ function toPlayerId(value: string): PlayerId {
 }
 
 function isPlayersTurn(state: GameState, playerId: PlayerId): boolean {
-  if (state.status !== "active") return false;
+  if (state.status !== "active") {
+    return false;
+  }
 
-  if (!Object.values(state.players).includes(playerId)) return false;
+  if (!Object.values(state.players).includes(playerId)) {
+    return false;
+  }
 
   return state.players[state.currentTurn] === playerId;
 }
@@ -133,6 +138,7 @@ function startCoutdown(game: GameState, duration = 5) {
             players: newState.players,
             status: newState.status,
             winner: newState.winner,
+            currentTurn: newState.currentTurn,
             countdown: newState.countdown,
           },
         },
@@ -159,6 +165,7 @@ function startCoutdown(game: GameState, duration = 5) {
             players: newState.players,
             status: newState.status,
             winner: newState.winner,
+            currentTurn: newState.currentTurn,
             countdown: newState.countdown,
           },
         },
@@ -192,13 +199,14 @@ const gameRouter = router({
         globalValue: gameState.globalValue,
         players: gameState.players,
         status: gameState.status,
+        currentTurn: gameState.currentTurn,
         winner: gameState.winner,
       };
     }),
   createGame: protectedProcedure
     .input(
       z.object({
-        lobbyType: z.enum(["open", "invite"]),
+        lobbyType: z.enum<LobbyType[]>(["open", "invite"]),
         invitedPlayerId: PlayerIdSchema,
       })
     )
@@ -210,7 +218,7 @@ const gameRouter = router({
         createdBy: currentPlayer,
         lobbyType: input.lobbyType,
         invitedPlayerId: input.invitedPlayerId,
-        currentTurn: "p1",
+        currentTurn: arrayElement<TurnType>(["p1", "p2"]) ?? "p1",
         players: {
           p1: currentPlayer,
         },
@@ -228,6 +236,7 @@ const gameRouter = router({
         globalValue: newGame.globalValue,
         players: newGame.players,
         status: newGame.status,
+        currentTurn: newGame.currentTurn,
         winner: newGame.winner,
       };
     }),
@@ -250,7 +259,7 @@ const gameRouter = router({
         };
       }
 
-      if (!isEmpty(p1) && !isEmpty(p2)) {
+      if (p1 && p2) {
         throw new Error("Lobby full");
       }
 
@@ -281,6 +290,7 @@ const gameRouter = router({
             globalValue: newState.globalValue,
             players: newState.players,
             status: newState.status,
+            currentTurn: newState.currentTurn,
             winner: newState.winner,
           },
         },
@@ -323,6 +333,7 @@ const gameRouter = router({
             globalValue: newState.globalValue,
             players: newState.players,
             status: newState.status,
+            currentTurn: newState.currentTurn,
             winner: newState.winner,
           },
         },
@@ -333,6 +344,7 @@ const gameRouter = router({
         globalValue: newState.globalValue,
         players: newState.players,
         status: newState.status,
+        currentTurn: newState.currentTurn,
         winner: newState.winner,
       };
     }),
@@ -358,6 +370,7 @@ const gameRouter = router({
               globalValue: game.globalValue,
               players: game.players,
               status: game.status,
+              currentTurn: game.currentTurn,
               winner: game.winner,
             }),
           },

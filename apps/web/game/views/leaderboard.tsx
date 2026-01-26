@@ -1,10 +1,9 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { debounce } from "moderndash";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import { type RouterInputs, useTRPC } from "../../../lib/trpc";
+import { useState } from "react";
+import { type RouterInputs, useTRPC } from "../../lib/trpc";
 
 export default function LeaderBoard() {
   const trpc = useTRPC();
@@ -19,8 +18,6 @@ export default function LeaderBoard() {
   );
 
   const joinGameMutation = useMutation(trpc.game.joinGame.mutationOptions());
-
-  const debouncedSetGameId = useMemo(() => debounce(setJoinGameId, 300), []);
 
   const createGame = ({ invitedPlayerId, lobbyType }: CreateGameInput) => {
     createGameMutation.mutate(
@@ -55,12 +52,6 @@ export default function LeaderBoard() {
     );
   };
 
-  useEffect(() => {
-    return () => {
-      debouncedSetGameId.cancel();
-    };
-  }, [debouncedSetGameId]);
-
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
       <p>LeaderBoard</p>
@@ -87,7 +78,7 @@ export default function LeaderBoard() {
         <input
           type="text"
           onChange={(e) => {
-            debouncedSetGameId(e.currentTarget.value);
+            setJoinGameId(e.currentTarget.value);
           }}
         />
         <button

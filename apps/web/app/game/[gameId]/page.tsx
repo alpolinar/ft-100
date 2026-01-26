@@ -1,11 +1,11 @@
-import { Game } from "../../components/game/game";
+import { GameContainer } from "../../../game/container/game-container";
 
 export default async function GamePage(props: PageProps<"/game/[gameId]">) {
   const { gameId } = await props.params;
 
   return (
     <div>
-      <Game gameId={gameId} />
+      <GameContainer gameId={gameId} />
     </div>
   );
 }
