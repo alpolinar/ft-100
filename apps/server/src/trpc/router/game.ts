@@ -1,4 +1,6 @@
 import { EventEmitter } from "node:events";
+import { TRPCError } from "@trpc/server";
+import { pipe } from "remeda";
 import z from "zod";
 import { arrayElement } from "../../utils";
 import { createAsyncQueue } from "../async-queue-helper";
@@ -36,15 +38,15 @@ function isPlayersTurn(state: GameState, playerId: PlayerId): boolean {
 
 function applyMove(state: GameState, cmd: MoveCommand): GameState {
   if (state.status !== "active") {
-    throw new Error("Game not active");
+    throw new TRPCError({ code: "NOT_FOUND", message: "Game not active." });
   }
 
   if (!isPlayersTurn(state, cmd.playerId)) {
-    throw new Error("Not your turn");
+    throw new TRPCError({ code: "BAD_REQUEST", message: "Not your turn." });
   }
 
   if (cmd.value < 1 || cmd.value > 10) {
-    throw new Error("Invalid move");
+    throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid move" });
   }
 
   const nextValue = state.globalValue + cmd.value;
@@ -89,15 +91,7 @@ function startCoutdown(game: GameState, duration = 5) {
 
       emitGameUpdate({
         gameId: game.id,
-        payload: {
-          id: newState.id,
-          globalValue: newState.globalValue,
-          players: newState.players,
-          status: newState.status,
-          winner: newState.winner,
-          currentTurn: newState.currentTurn,
-          countdown: newState.countdown,
-        },
+        payload: currentGame,
       });
 
       games.set(currentGame.id, {
@@ -113,15 +107,7 @@ function startCoutdown(game: GameState, duration = 5) {
 
       emitGameUpdate({
         gameId: currentGame.id,
-        payload: {
-          id: newState.id,
-          globalValue: newState.globalValue,
-          players: newState.players,
-          status: newState.status,
-          winner: newState.winner,
-          currentTurn: newState.currentTurn,
-          countdown: newState.countdown,
-        },
+        payload: newState,
       });
     }
   }, 1000);
@@ -130,31 +116,43 @@ function startCoutdown(game: GameState, duration = 5) {
 function emitGameUpdate({
   gameId,
   payload,
-}: Readonly<{ gameId: string; payload: GameStateSlim }>): boolean {
+}: Readonly<{ gameId: string; payload: GameState }>): boolean {
   return gameEvents.emit<GameEvent>(`game:${gameId}`, {
     kind: "game_event",
-    payload,
+    payload: convertGameStateToSlim(payload),
   });
+}
+
+function findGameOrThrow(gameId: string): GameState {
+  const game = games.get(gameId);
+
+  if (!game) {
+    throw new TRPCError({ code: "BAD_REQUEST", message: "Game Not Found!" });
+  }
+
+  return game;
+}
+
+function convertGameStateToSlim(state: GameState): GameStateSlim {
+  return {
+    id: state.id,
+    players: state.players,
+    status: state.status,
+    countdown: state.countdown,
+    currentTurn: state.currentTurn,
+    globalValue: state.globalValue,
+    invitedPlayerId: state.invitedPlayerId,
+    winner: state.winner,
+  };
 }
 
 const gameRouter = router({
   getGameState: protectedProcedure
     .input(z.object({ gameId: z.string() }))
     .query(({ input }): GameStateSlim => {
-      const gameState = games.get(input.gameId);
+      const gameState = findGameOrThrow(input.gameId);
 
-      if (!gameState) {
-        throw new Error("No Game State Found");
-      }
-
-      return {
-        id: gameState.id,
-        globalValue: gameState.globalValue,
-        players: gameState.players,
-        status: gameState.status,
-        currentTurn: gameState.currentTurn,
-        winner: gameState.winner,
-      };
+      return pipe(gameState, convertGameStateToSlim);
     }),
   createGame: protectedProcedure
     .input(
@@ -165,6 +163,7 @@ const gameRouter = router({
     )
     .mutation(({ input, ctx }): GameStateSlim => {
       const currentPlayer = toPlayerId(ctx.user.id);
+      const now = new Date();
 
       const newGame: GameState = {
         id: crypto.randomUUID(),
@@ -177,31 +176,20 @@ const gameRouter = router({
         },
         globalValue: 0,
         status: "lobby",
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: now,
+        updatedAt: now,
         version: 1,
       };
 
       games.set(newGame.id, newGame);
 
-      return {
-        id: newGame.id,
-        globalValue: newGame.globalValue,
-        players: newGame.players,
-        status: newGame.status,
-        currentTurn: newGame.currentTurn,
-        winner: newGame.winner,
-      };
+      return pipe(newGame, convertGameStateToSlim);
     }),
   joinGame: protectedProcedure
     .input(z.object({ gameId: z.string() }))
     .mutation(({ input, ctx }) => {
       const currentPlayer = toPlayerId(ctx.user.id);
-      const gameState = games.get(input.gameId);
-
-      if (!gameState) {
-        throw new Error("No Game Found");
-      }
+      const gameState = findGameOrThrow(input.gameId);
 
       const { p1, p2 } = gameState.players;
 
@@ -213,7 +201,7 @@ const gameRouter = router({
       }
 
       if (p1 && p2) {
-        throw new Error("Lobby full");
+        throw new TRPCError({ code: "FORBIDDEN", message: "Lobby full." });
       }
 
       const newState: GameState = {
@@ -236,14 +224,7 @@ const gameRouter = router({
 
       emitGameUpdate({
         gameId: input.gameId,
-        payload: {
-          id: newState.id,
-          globalValue: newState.globalValue,
-          players: newState.players,
-          status: newState.status,
-          currentTurn: newState.currentTurn,
-          winner: newState.winner,
-        },
+        payload: newState,
       });
 
       return {
@@ -260,11 +241,7 @@ const gameRouter = router({
     )
     .mutation(({ input, ctx }): GameStateSlim => {
       const playerId = toPlayerId(ctx.user.id);
-      const gameState = games.get(input.gameId);
-
-      if (!gameState) {
-        throw new Error("Game does not exists");
-      }
+      const gameState = findGameOrThrow(input.gameId);
 
       const newState = applyMove(gameState, {
         gameId: input.gameId,
@@ -276,24 +253,10 @@ const gameRouter = router({
 
       emitGameUpdate({
         gameId: input.gameId,
-        payload: {
-          id: newState.id,
-          globalValue: newState.globalValue,
-          players: newState.players,
-          status: newState.status,
-          currentTurn: newState.currentTurn,
-          winner: newState.winner,
-        },
+        payload: newState,
       });
 
-      return {
-        id: newState.id,
-        globalValue: newState.globalValue,
-        players: newState.players,
-        status: newState.status,
-        currentTurn: newState.currentTurn,
-        winner: newState.winner,
-      };
+      return pipe(newState, convertGameStateToSlim);
     }),
   onGameUpdate: protectedProcedure
     .input(z.object({ gameId: z.string() }))
@@ -310,14 +273,7 @@ const gameRouter = router({
       if (game) {
         queue.push({
           kind: "game_event",
-          payload: structuredClone({
-            id: game.id,
-            globalValue: game.globalValue,
-            players: game.players,
-            status: game.status,
-            currentTurn: game.currentTurn,
-            winner: game.winner,
-          }),
+          payload: structuredClone(pipe(game, convertGameStateToSlim)),
         });
       }
 
