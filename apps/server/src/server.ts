@@ -10,9 +10,7 @@ import { env } from "./env";
 import { createContext } from "./trpc/context";
 import { type AppRouter, appRouter } from "./trpc/router";
 
-const allowedOrigins = [
-  env.CLIENT_ORIGIN, // Next.js dev
-];
+const allowedOrigins = [env.CLIENT_ORIGIN];
 
 const envToLogger = {
   development: {

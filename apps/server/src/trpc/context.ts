@@ -1,5 +1,5 @@
+import crypto from "node:crypto";
 import type { CreateFastifyContextOptions } from "@trpc/server/adapters/fastify";
-import crypto from "crypto";
 
 export async function createContext({ req, res }: CreateFastifyContextOptions) {
   let playerId = req.cookies.playerId;

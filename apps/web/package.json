@@ -1,38 +1,36 @@
 {
-    "name": "web",
-    "version": "0.1.0",
-    "type": "module",
-    "private": true,
-    "scripts": {
-        "dev": "next dev --port 3000",
-        "build": "next build",
-        "start": "next start",
-        "lint": "eslint --max-warnings 0",
-        "check-types": "next typegen && tsc --noEmit",
-        "clean": "rm -rf node_modules && rm -rf .next"
-    },
-    "dependencies": {
-        "@repo/ui": "workspace:*",
-        "@tanstack/react-form": "^1.27.7",
-        "@tanstack/react-query": "^5.90.16",
-        "@trpc/client": "^11.8.1",
-        "@trpc/server": "^11.8.1",
-        "@trpc/tanstack-react-query": "^11.8.1",
-        "next": "^16.1.1",
-        "react": "^19.2.3",
-        "react-dom": "^19.2.3",
-        "remeda": "^2.33.4",
-        "superjson": "^2.2.6",
-        "ts-pattern": "^5.9.0",
-        "zod": "^4.3.5"
-    },
-    "devDependencies": {
-        "@repo/typescript-config": "workspace:*",
-        "@types/node": "^22.19.5",
-        "@types/react": "19.2.2",
-        "@types/react-dom": "19.2.2",
-        "eslint": "^9.39.2",
-        "server": "workspace:*",
-        "typescript": "5.9.2"
-    }
+  "name": "web",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "next start",
+    "check-types": "next typegen && tsc --noEmit",
+    "clean": "rm -rf node_modules && rm -rf .next"
+  },
+  "dependencies": {
+    "@repo/ui": "workspace:*",
+    "@tanstack/react-form": "^1.28.0",
+    "@tanstack/react-query": "^5.90.20",
+    "@trpc/client": "^11.9.0",
+    "@trpc/server": "^11.9.0",
+    "@trpc/tanstack-react-query": "^11.9.0",
+    "next": "^16.1.6",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "remeda": "^2.33.4",
+    "superjson": "^2.2.6",
+    "ts-pattern": "^5.9.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^22.19.7",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
+    "server": "workspace:*",
+    "typescript": "5.9.2"
+  }
 }
