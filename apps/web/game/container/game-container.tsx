@@ -62,29 +62,35 @@ export function GameContainer({ gameId }: GameProps) {
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
       <Link href="/game">leaderboard</Link>
       {match(localGame?.payload)
-        .with({ status: "lobby" }, () => (
-          <p>waiting for ther other player...</p>
-        ))
-        .with({ status: "countdown" }, (current) => <p>{current.countdown}</p>)
-        .with({ status: "active" }, (current) => (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "16px",
-            }}
-          >
-            <p>{current.globalValue}</p>
-            <Game
-              onSubmit={makeMove}
-              currentPlayerId={current.players[current.currentTurn]}
-            />
-          </div>
-        ))
-        .with({ status: "finished" }, (current) => (
-          <p>winner is: {current.winner}</p>
-        ))
-        .with(undefined, () => <p>loading...</p>)
+        .with({ status: "lobby" }, () => {
+          return <p>waiting for ther other player...</p>;
+        })
+        .with({ status: "countdown" }, (current) => {
+          return <p>{current.countdown}</p>;
+        })
+        .with({ status: "active" }, (current) => {
+          return (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "16px",
+              }}
+            >
+              <p>{current.globalValue}</p>
+              <Game
+                onSubmit={makeMove}
+                currentPlayerId={current.players[current.currentTurn]}
+              />
+            </div>
+          );
+        })
+        .with({ status: "finished" }, (current) => {
+          return <p>winner is: {current.winner}</p>;
+        })
+        .with(undefined, () => {
+          return <p>loading...</p>;
+        })
         .exhaustive()}
     </div>
   );
