@@ -11,5 +11,17 @@ services:
       - redis-data:/data
     command: ["redis-server", "--appendonly", "yes"] # persist data
 
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: redisinsight
+    restart: unless-stopped
+    ports:
+      - "5540:5540"
+    depends_on:
+      - redis
+    volumes:
+      - redisinsight-data:/data
+
 volumes:
   redis-data:
+  redisinsight-data:
