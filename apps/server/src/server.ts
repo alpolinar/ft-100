@@ -7,33 +7,21 @@ import {
 } from "@trpc/server/adapters/fastify";
 import Fastify from "fastify";
 import { env } from "./env";
+import { bindFastifyLogger } from "./logging";
+import { pinoConfig } from "./logging/config";
 import { createContext } from "./trpc/context";
 import { type AppRouter, appRouter } from "./trpc/router";
 
 const allowedOrigins = [env.CLIENT_ORIGIN];
 
-const envToLogger = {
-  development: {
-    transport: {
-      target: "pino-pretty",
-      options: {
-        colorize: true,
-        translateTime: "HH:MM:ss Z",
-        ignore: "pid,hostname",
-      },
-    },
-  },
-  staging: true,
-  production: true,
-  test: false,
-};
-
 const app = Fastify({
-  logger: envToLogger[env.NODE_ENV] ?? true,
+  logger: pinoConfig,
   routerOptions: {
     maxParamLength: 5000,
   },
 });
+
+bindFastifyLogger(app.log);
 
 app.register(cors, {
   origin: (origin, callback) => {

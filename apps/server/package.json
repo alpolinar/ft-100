@@ -32,6 +32,7 @@
     "dotenv": "^17.2.3",
     "fastify": "^5.7.2",
     "ioredis": "^5.9.2",
+    "pino": "^10.3.0",
     "remeda": "^2.33.4",
     "superjson": "^2.2.6",
     "ts-pattern": "^5.9.0",
