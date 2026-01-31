@@ -1,17 +1,7 @@
 import type Redis from "ioredis";
 import { isNullish } from "remeda";
-import z from "zod";
-import type { UserId } from "../entities/user";
+import type { Session, SessionId } from "../entities/session";
 import { redis } from "../infrastructure/redis";
-
-const SessionIdSchema = z.string().brand<"SessionId">();
-
-export type SessionId = z.infer<typeof SessionIdSchema>;
-
-export type Session = {
-  userId: UserId;
-  createdAt: Date;
-};
 
 export interface ISessionStore {
   get(sessionId: SessionId): Promise<Session | undefined>;
