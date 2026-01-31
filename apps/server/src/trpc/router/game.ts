@@ -321,8 +321,6 @@ const gameRouter = router({
         while (!signal?.aborted) {
           yield await queue.next();
         }
-
-        yield await queue.next();
       } finally {
         gameEvents.off(key, handler);
       }
