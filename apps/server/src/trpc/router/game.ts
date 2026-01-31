@@ -15,10 +15,11 @@ import {
 import { arrayElement } from "../../utils";
 import { createAsyncQueue } from "../async-queue-helper";
 import { protectedProcedure, router } from "../trpc";
+import { getLogger } from "../../logging";
 
 const games = new Map<string, Game>();
-
 const gameEvents = new EventEmitter();
+const logger = getLogger();
 
 function toPlayerId(value: string): PlayerId {
   return value as PlayerId;
@@ -69,7 +70,17 @@ function applyMove(state: Game, cmd: MoveCommand): Game {
 }
 
 function startCoutdown(game: Game, duration = 5) {
-  if (game.status !== "lobby" && game.status === "countdown") return;
+  logger.info({ id: game.id }, "Starting game countdown...");
+  if (game.status !== "lobby" && game.status === "countdown") {
+    logger.error(
+      {
+        id: game.id,
+        status: game.status,
+      },
+      "Invalid game state"
+    );
+    return;
+  }
 
   games.set(game.id, { ...game, countdown: duration });
 
@@ -77,6 +88,7 @@ function startCoutdown(game: Game, duration = 5) {
     const currentGame = games.get(game.id);
 
     if (!currentGame) {
+      logger.error(game, "Failed to fetch game state");
       clearInterval(interval);
       return;
     }
@@ -84,6 +96,7 @@ function startCoutdown(game: Game, duration = 5) {
     const { countdown } = currentGame;
 
     if (countdown && countdown > 0) {
+      logger.info(`Game is starting in ${countdown}`);
       const newState: Game = {
         ...currentGame,
         status: "countdown",
@@ -109,6 +122,8 @@ function startCoutdown(game: Game, duration = 5) {
         gameId: currentGame.id,
         payload: newState,
       });
+
+      logger.info("Game has started.");
     }
   }, 1000);
 }
@@ -117,6 +132,8 @@ function emitGameUpdate({
   gameId,
   payload,
 }: Readonly<{ gameId: string; payload: Game }>): boolean {
+  logger.info("Emitting Game State Update");
+
   return gameEvents.emit<GameEvent>(`game:${gameId}`, {
     kind: "game_event",
     payload: convertGameStateToSlim(payload),
@@ -165,6 +182,8 @@ const gameRouter = router({
       const currentPlayer = toPlayerId(ctx.user.id);
       const now = new Date();
 
+      logger.info({ userId: currentPlayer }, "Creating Game...");
+
       const newGame: Game = {
         id: crypto.randomUUID(),
         createdBy: currentPlayer,
@@ -183,6 +202,8 @@ const gameRouter = router({
 
       games.set(newGame.id, newGame);
 
+      logger.info({ gameId: newGame.id }, "Game Successfully Created");
+
       return pipe(newGame, convertGameStateToSlim);
     }),
   joinGame: protectedProcedure
@@ -191,9 +212,19 @@ const gameRouter = router({
       const currentPlayer = toPlayerId(ctx.user.id);
       const gameState = findGameOrThrow(input.gameId);
 
+      logger.info(
+        { gameId: input.gameId, userId: currentPlayer },
+        "Player is joining game"
+      );
+
       const { p1, p2 } = gameState.players;
 
       if (p1 === currentPlayer || p2 === currentPlayer) {
+        logger.info(
+          { gameId: input.gameId, userId: currentPlayer },
+          "Player already joined"
+        );
+
         return {
           status: true,
           message: "Player already joined",
@@ -227,6 +258,8 @@ const gameRouter = router({
         payload: newState,
       });
 
+      logger.info({ userId: ctx.user.id }, "Player has joined the game");
+
       return {
         status: true,
         message: "Game joined",
@@ -240,6 +273,11 @@ const gameRouter = router({
       })
     )
     .mutation(({ input, ctx }): GameSlim => {
+      logger.info(
+        { gameId: input.gameId, userId: ctx.user.id },
+        "Player is making a move"
+      );
+
       const playerId = toPlayerId(ctx.user.id);
       const gameState = findGameOrThrow(input.gameId);
 
