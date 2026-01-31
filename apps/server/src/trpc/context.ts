@@ -1,12 +1,19 @@
-import type { CreateFastifyContextOptions } from "@trpc/server/adapters/fastify";
 import crypto from "node:crypto";
+import type { CreateFastifyContextOptions } from "@trpc/server/adapters/fastify";
 import { match, P } from "ts-pattern";
 import { sessionStore } from "../authentication/session-store";
 import { userStore } from "../authentication/user-store";
-import { SessionIdSchema } from "../entities/session";
-import { UserIdSchema } from "../entities/user";
+import { type SessionId, SessionIdSchema } from "../entities/session";
+import { type User, UserIdSchema } from "../entities/user";
 
-async function createAnonymousSession(ctx: CreateFastifyContextOptions) {
+export type Context = {
+  user: User;
+  sessionId: SessionId;
+};
+
+async function createAnonymousSession(
+  ctx: CreateFastifyContextOptions
+): Promise<Context> {
   const userId = UserIdSchema.parse(crypto.randomUUID());
 
   const user = await userStore.create({
@@ -34,7 +41,9 @@ async function createAnonymousSession(ctx: CreateFastifyContextOptions) {
   };
 }
 
-export async function createContext(ctx: CreateFastifyContextOptions) {
+export async function createContext(
+  ctx: CreateFastifyContextOptions
+): Promise<Context> {
   const sessionId = SessionIdSchema.parse(ctx.req.cookies.session);
 
   return match(sessionId)
@@ -58,5 +67,3 @@ export async function createContext(ctx: CreateFastifyContextOptions) {
     })
     .otherwise(async () => createAnonymousSession(ctx));
 }
-
-export type Context = Awaited<ReturnType<typeof createContext>>;
