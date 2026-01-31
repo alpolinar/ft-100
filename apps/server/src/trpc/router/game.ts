@@ -2,21 +2,21 @@ import { EventEmitter } from "node:events";
 import { TRPCError } from "@trpc/server";
 import { pipe } from "remeda";
 import z from "zod";
-import { arrayElement } from "../../utils";
-import { createAsyncQueue } from "../async-queue-helper";
-import { protectedProcedure, router } from "../trpc";
 import {
   type GameEvent,
-  type GameState,
-  type GameStateSlim,
+  type Game,
+  type GameSlim,
   type LobbyType,
   type MoveCommand,
   type PlayerId,
   PlayerIdSchema,
   type TurnType,
-} from "./types/game-types";
+} from "../../entities/game";
+import { arrayElement } from "../../utils";
+import { createAsyncQueue } from "../async-queue-helper";
+import { protectedProcedure, router } from "../trpc";
 
-const games = new Map<string, GameState>();
+const games = new Map<string, Game>();
 
 const gameEvents = new EventEmitter();
 
@@ -24,7 +24,7 @@ function toPlayerId(value: string): PlayerId {
   return value as PlayerId;
 }
 
-function isPlayersTurn(state: GameState, playerId: PlayerId): boolean {
+function isPlayersTurn(state: Game, playerId: PlayerId): boolean {
   if (state.status !== "active") {
     return false;
   }
@@ -36,7 +36,7 @@ function isPlayersTurn(state: GameState, playerId: PlayerId): boolean {
   return state.players[state.currentTurn] === playerId;
 }
 
-function applyMove(state: GameState, cmd: MoveCommand): GameState {
+function applyMove(state: Game, cmd: MoveCommand): Game {
   if (state.status !== "active") {
     throw new TRPCError({ code: "NOT_FOUND", message: "Game not active." });
   }
@@ -68,7 +68,7 @@ function applyMove(state: GameState, cmd: MoveCommand): GameState {
   };
 }
 
-function startCoutdown(game: GameState, duration = 5) {
+function startCoutdown(game: Game, duration = 5) {
   if (game.status !== "lobby" && game.status === "countdown") return;
 
   games.set(game.id, { ...game, countdown: duration });
@@ -84,7 +84,7 @@ function startCoutdown(game: GameState, duration = 5) {
     const { countdown } = currentGame;
 
     if (countdown && countdown > 0) {
-      const newState: GameState = {
+      const newState: Game = {
         ...currentGame,
         status: "countdown",
       };
@@ -101,7 +101,7 @@ function startCoutdown(game: GameState, duration = 5) {
     } else {
       clearInterval(interval);
 
-      const newState: GameState = { ...currentGame, status: "active" };
+      const newState: Game = { ...currentGame, status: "active" };
 
       games.set(currentGame.id, newState);
 
@@ -116,14 +116,14 @@ function startCoutdown(game: GameState, duration = 5) {
 function emitGameUpdate({
   gameId,
   payload,
-}: Readonly<{ gameId: string; payload: GameState }>): boolean {
+}: Readonly<{ gameId: string; payload: Game }>): boolean {
   return gameEvents.emit<GameEvent>(`game:${gameId}`, {
     kind: "game_event",
     payload: convertGameStateToSlim(payload),
   });
 }
 
-function findGameOrThrow(gameId: string): GameState {
+function findGameOrThrow(gameId: string): Game {
   const game = games.get(gameId);
 
   if (!game) {
@@ -133,7 +133,7 @@ function findGameOrThrow(gameId: string): GameState {
   return game;
 }
 
-function convertGameStateToSlim(state: GameState): GameStateSlim {
+function convertGameStateToSlim(state: Game): GameSlim {
   return {
     id: state.id,
     players: state.players,
@@ -149,7 +149,7 @@ function convertGameStateToSlim(state: GameState): GameStateSlim {
 const gameRouter = router({
   getGameState: protectedProcedure
     .input(z.object({ gameId: z.string() }))
-    .query(({ input }): GameStateSlim => {
+    .query(({ input }): GameSlim => {
       const gameState = findGameOrThrow(input.gameId);
 
       return pipe(gameState, convertGameStateToSlim);
@@ -161,11 +161,11 @@ const gameRouter = router({
         invitedPlayerId: PlayerIdSchema,
       })
     )
-    .mutation(({ input, ctx }): GameStateSlim => {
+    .mutation(({ input, ctx }): GameSlim => {
       const currentPlayer = toPlayerId(ctx.user.id);
       const now = new Date();
 
-      const newGame: GameState = {
+      const newGame: Game = {
         id: crypto.randomUUID(),
         createdBy: currentPlayer,
         lobbyType: input.lobbyType,
@@ -204,7 +204,7 @@ const gameRouter = router({
         throw new TRPCError({ code: "FORBIDDEN", message: "Lobby full." });
       }
 
-      const newState: GameState = {
+      const newState: Game = {
         ...gameState,
         players: {
           p1: gameState.players.p1,
@@ -239,7 +239,7 @@ const gameRouter = router({
         value: z.number(),
       })
     )
-    .mutation(({ input, ctx }): GameStateSlim => {
+    .mutation(({ input, ctx }): GameSlim => {
       const playerId = toPlayerId(ctx.user.id);
       const gameState = findGameOrThrow(input.gameId);
 

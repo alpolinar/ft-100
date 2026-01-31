@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  redis:
+    image: redis:7
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379" # expose Redis to localhost for development
+    volumes:
+      - redis-data:/data
+    command: ["redis-server", "--appendonly", "yes"] # persist data
+
+volumes:
+  redis-data:

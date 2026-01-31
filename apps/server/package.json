@@ -4,6 +4,10 @@
   "description": "",
   "private": true,
   "main": "dist/server.js",
+  "engines": {
+    "node": "24",
+    "pnpm": "10"
+  },
   "exports": {
     "./types": {
       "types": "./dist/index.d.ts",
@@ -27,6 +31,7 @@
     "@trpc/server": "^11.9.0",
     "dotenv": "^17.2.3",
     "fastify": "^5.7.2",
+    "ioredis": "^5.9.2",
     "remeda": "^2.33.4",
     "superjson": "^2.2.6",
     "ts-pattern": "^5.9.0",

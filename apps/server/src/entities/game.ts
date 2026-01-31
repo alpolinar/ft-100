@@ -15,7 +15,7 @@ export type LobbyType = "open" | "invite";
 
 export type TurnType = "p1" | "p2";
 
-export type GameState = Readonly<{
+export type Game = Readonly<{
   id: string;
   createdBy: PlayerId;
   invitedPlayerId?: PlayerId;
@@ -31,8 +31,8 @@ export type GameState = Readonly<{
   updatedAt: Date;
 }>;
 
-export type GameStateSlim = Omit<
-  GameState,
+export type GameSlim = Omit<
+  Game,
   "createdBy" | "version" | "createdAt" | "updatedAt" | "lobbyType"
 >;
 
@@ -44,5 +44,5 @@ export type MoveCommand = {
 
 export type GameEvent = {
   kind: "game_event";
-  payload: GameStateSlim;
+  payload: GameSlim;
 };

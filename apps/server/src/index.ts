@@ -1,2 +1,2 @@
+export * from "./entities/game";
 export type { AppRouter } from "./trpc/router";
-export * from "./trpc/router/types/game-types";
