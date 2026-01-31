@@ -91,7 +91,7 @@ function startCoutdown(game: Game, duration = 5) {
 
       emitGameUpdate({
         gameId: game.id,
-        payload: currentGame,
+        payload: newState,
       });
 
       games.set(currentGame.id, {
@@ -273,7 +273,7 @@ const gameRouter = router({
       if (game) {
         queue.push({
           kind: "game_event",
-          payload: structuredClone(pipe(game, convertGameStateToSlim)),
+          payload: pipe(game, convertGameStateToSlim),
         });
       }
 
