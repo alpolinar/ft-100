@@ -22,6 +22,27 @@ services:
     volumes:
       - redisinsight-data:/data
 
+  postgres:
+    restart: always
+    image: postgres:18.1-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_PASSWORD: ft100password
+      POSTGRES_USER: ft100user
+      POSTGRES_DB: ft100db
+      POSTGRES_PORT: 5432
+    ports:
+      - "5432:5432"
+    networks:
+      - ft100-network
+    volumes:
+      - ft100-postgres:/var/lib/postgresql/data
+
 volumes:
   redis-data:
   redisinsight-data:
+  ft100-postgres:
+
+networks:
+  ft100-network:
+    driver: bridge
