@@ -1,10 +1,10 @@
 import crypto from "node:crypto";
 import type { CreateFastifyContextOptions } from "@trpc/server/adapters/fastify";
 import { match, P } from "ts-pattern";
-import { sessionStore } from "../authentication/session-store";
-import { userStore } from "../authentication/user-store";
 import { type SessionId, SessionIdSchema } from "../entities/session";
 import { type User, UserIdSchema } from "../entities/user";
+import { sessionStore } from "../stores/session-store";
+import { userStore } from "../stores/user-store";
 
 export type Context = {
   user: User;
@@ -22,12 +22,12 @@ async function createAnonymousSession(
     createdAt: new Date(),
   });
 
-  const sessionId = SessionIdSchema.parse(crypto.randomUUID());
-
-  await sessionStore.create(sessionId, {
+  const session = await sessionStore.create({
     userId,
     createdAt: new Date(),
   });
+
+  const sessionId = SessionIdSchema.parse(session.id);
 
   ctx.res.setCookie("session", sessionId, {
     httpOnly: true,
@@ -44,7 +44,9 @@ async function createAnonymousSession(
 export async function createContext(
   ctx: CreateFastifyContextOptions
 ): Promise<Context> {
-  const sessionId = SessionIdSchema.parse(ctx.req.cookies.session);
+  const sessionId = ctx.req.cookies.session
+    ? SessionIdSchema.parse(ctx.req.cookies.session)
+    : undefined;
 
   return match(sessionId)
     .with(P.string, async (sessionId) => {
