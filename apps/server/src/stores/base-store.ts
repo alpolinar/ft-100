@@ -41,20 +41,16 @@ export abstract class BaseStore<
   }
 
   async create(input: CreateInput): Promise<DomainObject & Persisted> {
-    this.logger.info("Creatng Record");
+    this.logger.info("Creating Record");
     try {
       const id = crypto.randomUUID();
-      const newRecord = { ...input, id };
-      const result = await this.redis.set(
+      await this.redis.set(
         this.buildKey(id),
-        JSON.stringify(input)
+        JSON.stringify(input),
+        "EX",
+        60 * 60 * 24 * 7
       );
-
-      if (result !== "OK") {
-        throw new Error("Failed To Set Value");
-      }
-
-      return newRecord;
+      return { ...input, id };
     } catch (error: unknown) {
       this.logger.error(error, "Failed To Create Record");
       throw error;
