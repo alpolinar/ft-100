@@ -1,5 +1,4 @@
 import type Redis from "ioredis";
-import { isNullish } from "remeda";
 import type { User, UserId } from "../entities/user";
 import { redis } from "../infrastructure/redis";
 
@@ -18,11 +17,7 @@ export class RedisUserStore implements IUserStore {
 
   async get(userId: UserId): Promise<User | undefined> {
     const raw = await this.redis.get(this.getKey(userId));
-    if (isNullish(raw)) {
-      return undefined;
-    }
-
-    return JSON.parse(raw);
+    return raw ? JSON.parse(raw) : undefined;
   }
 
   async create(user: User): Promise<User> {

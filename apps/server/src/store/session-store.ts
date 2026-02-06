@@ -1,5 +1,4 @@
 import type Redis from "ioredis";
-import { isNullish } from "remeda";
 import type { Session, SessionId } from "../entities/session";
 import { redis } from "../infrastructure/redis";
 
@@ -18,12 +17,7 @@ class SessionStore implements ISessionStore {
 
   async get(sessionId: SessionId): Promise<Session | undefined> {
     const raw = await this.redis.get(this.getKey(sessionId));
-
-    if (isNullish(raw)) {
-      return undefined;
-    }
-
-    return JSON.parse(raw);
+    return raw ? JSON.parse(raw) : undefined;
   }
 
   async create(sessionId: SessionId, session: Session): Promise<void> {
