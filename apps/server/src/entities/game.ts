@@ -24,7 +24,7 @@ export type Game = Readonly<{
   currentTurn: TurnType;
   globalValue: number;
   status: GameStateStatus;
-  winner?: PlayerId;
+  winnerId?: PlayerId;
   countdown?: number;
   version: number; // optimistic locking
   createdAt: Date;

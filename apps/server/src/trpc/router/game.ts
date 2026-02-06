@@ -58,7 +58,7 @@ function applyMove(state: Game, cmd: MoveCommand): Game {
     ...state,
     globalValue: nextValue,
     status: isWinningMove ? "finished" : "active",
-    winner: isWinningMove ? cmd.playerId : undefined,
+    winnerId: isWinningMove ? cmd.playerId : undefined,
     currentTurn: isWinningMove
       ? state.currentTurn
       : state.currentTurn === "p1"
@@ -159,7 +159,7 @@ function convertGameStateToSlim(state: Game): GameSlim {
     currentTurn: state.currentTurn,
     globalValue: state.globalValue,
     invitedPlayerId: state.invitedPlayerId,
-    winner: state.winner,
+    winnerId: state.winnerId,
   };
 }
 

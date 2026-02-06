@@ -3,9 +3,9 @@
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
-    "moduleResolution": "node",
-    "module": "commonjs",
-    "target": "es2022",
+    "moduleResolution": "bundler",
+    "module": "esnext",
+    "target": "es2023",
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
     "noEmit": false
