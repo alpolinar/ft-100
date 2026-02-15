@@ -4,7 +4,6 @@
   "description": "",
   "private": true,
   "main": "dist/server.js",
-  "type": "module",
   "engines": {
     "node": "24",
     "pnpm": "10"
@@ -16,7 +15,7 @@
     }
   },
   "scripts": {
-    "dev": "pnpm build & ts-node-dev --respawn --transpile-only src/server.ts",
+    "dev": "pnpm build & tsx watch src/server.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -49,7 +48,7 @@
     "@types/pg": "^8.16.0",
     "pino-pretty": "^13.1.3",
     "prisma": "^7.3.0",
-    "ts-node-dev": "^2.0.0",
+    "tsx": "^4.21.0",
     "typescript": "5.9.2"
   }
 }

@@ -2,14 +2,14 @@
   "extends": "@repo/typescript-config/base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "src",
-    "moduleResolution": "bundler",
-    "module": "esnext",
-    "target": "es2023",
+    "rootDir": ".",
+    "moduleResolution": "node",
+    "module": "commonjs",
+    "target": "es2022",
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
     "noEmit": false
   },
-  "include": ["src"],
+  "include": ["src", "prisma/generated"],
   "exclude": ["node_modules", "dist"]
 }

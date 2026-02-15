@@ -86,7 +86,7 @@ export function GameContainer({ gameId }: GameProps) {
           );
         })
         .with({ status: "finished" }, (current) => {
-          return <p>winner is: {current.winner}</p>;
+          return <p>winner is: {current.winnerId}</p>;
         })
         .with(undefined, () => {
           return <p>loading...</p>;
