@@ -1,5 +1,5 @@
-import crypto from "node:crypto";
 import type { CreateFastifyContextOptions } from "@trpc/server/adapters/fastify";
+import crypto from "node:crypto";
 import { match, P } from "ts-pattern";
 import type { PrismaClient } from "../../prisma/generated/prisma/client.js";
 import { prisma } from "../db.js";
@@ -20,6 +20,7 @@ const logger = getLogger();
 async function createAnonymousSession(
   ctx: CreateFastifyContextOptions
 ): Promise<Context> {
+  logger.info("Creating new session...");
   const userId = UserIdSchema.parse(crypto.randomUUID());
   const sessionId = SessionIdSchema.parse(crypto.randomUUID());
 
@@ -43,11 +44,9 @@ async function createAnonymousSession(
     createdAt: new Date(),
   });
 
-  ctx.res.setCookie("session", sessionId, {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-  });
+  ctx.res.setCookie("session", sessionId);
+
+  logger.info({ user, sessionId }, "New Session Created");
 
   return {
     user,
@@ -59,6 +58,7 @@ async function createAnonymousSession(
 export async function createContext(
   ctx: CreateFastifyContextOptions
 ): Promise<Context> {
+  logger.info({ sessionId: ctx.req.cookies.session }, "Current Session");
   return match(ctx.req.cookies.session)
     .with(P.string, async (rawSessionId) => {
       const sessionId = SessionIdSchema.safeParse(rawSessionId);
@@ -69,9 +69,8 @@ export async function createContext(
       }
 
       const session = await sessionStore.get(sessionId.data);
-
       if (!session) {
-        logger.info("Session Not Found!");
+        logger.info({ sessionId: sessionId.data }, "Session Not Found!");
         return createAnonymousSession(ctx);
       }
 
@@ -79,7 +78,10 @@ export async function createContext(
       logger.info(user, "createContext user");
 
       if (!user) {
-        logger.info("!user");
+        logger.info(
+          { userId: session.userId, sessionId: sessionId.data },
+          "Session User Not Found"
+        );
         return createAnonymousSession(ctx);
       }
 
@@ -89,5 +91,8 @@ export async function createContext(
         prisma,
       };
     })
-    .otherwise(async () => createAnonymousSession(ctx));
+    .otherwise(async () => {
+      logger.info("No Current Session");
+      return createAnonymousSession(ctx);
+    });
 }

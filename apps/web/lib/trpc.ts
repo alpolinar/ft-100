@@ -46,11 +46,11 @@ export const client = createTRPCClient<AppRouter>({
     splitLink({
       condition: (op) => op.type === "subscription",
       true: httpSubscriptionLink({
-        url: "http://localhost:3001/api",
+        url: "/api",
         transformer: superjson,
       }),
       false: httpBatchLink({
-        url: "http://localhost:3001/api",
+        url: "/api",
         transformer: superjson,
         fetch: (url, options) => {
           return fetch(url, {

@@ -45,8 +45,12 @@ app.register(cors, {
 
 app.register(cookie, {
   secret: env.SECRET,
-  parseOption: {},
-} as FastifyCookieOptions);
+  parseOptions: {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+  },
+} satisfies FastifyCookieOptions);
 
 app.register(fastifyTRPCPlugin, {
   prefix: "/api",
