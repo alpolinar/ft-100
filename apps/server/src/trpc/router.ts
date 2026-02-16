@@ -1,6 +1,6 @@
-import { gameRouter } from "./router/game";
-import { userRouter } from "./router/user";
-import { router } from "./trpc";
+import { gameRouter } from "./router/game.js";
+import { userRouter } from "./router/user.js";
+import { router } from "./trpc.js";
 
 export const appRouter = router({
   user: userRouter,

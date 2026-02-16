@@ -1,18 +1,11 @@
-import Redis from "ioredis";
-import { env } from "../env";
-import { getLogger } from "../logging";
+import { Redis } from "ioredis";
+import { env } from "../env.js";
 
-export const redis = new Redis({
-  host: env.REDIS_SERVICE_HOST,
-  port: env.REDIS_SERVICE_PORT,
-});
+export type RedisClient = InstanceType<typeof Redis>;
 
-const logger = getLogger();
-
-redis.on("connect", () => {
-  logger.info("Successfully connected to Redis server");
-});
-
-redis.on("error", (error) => {
-  logger.error(error, "Failed to connect to Redis server");
-});
+export function createRedisClient(): RedisClient {
+  return new Redis({
+    host: env.REDIS_SERVICE_HOST,
+    port: env.REDIS_SERVICE_PORT,
+  });
+}

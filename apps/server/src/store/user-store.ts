@@ -1,6 +1,6 @@
-import type Redis from "ioredis";
-import type { User, UserId } from "../entities/user";
-import { redis } from "../infrastructure/redis";
+import type { Redis } from "ioredis";
+import type { User, UserId } from "../entities/user.js";
+import { createRedisClient } from "../infrastructure/redis.js";
 
 export interface IUserStore {
   get(userId: UserId): Promise<User | undefined>;
@@ -36,4 +36,4 @@ export class RedisUserStore implements IUserStore {
   }
 }
 
-export const userStore = new RedisUserStore(redis);
+export const userStore = new RedisUserStore(createRedisClient());

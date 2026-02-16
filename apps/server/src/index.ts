@@ -1,4 +1,4 @@
-export * from "./entities/game";
-export * from "./entities/user";
-export type { Context } from "./trpc/context";
-export type { AppRouter } from "./trpc/router";
+export * from "./entities/game.js";
+export * from "./entities/user.js";
+export type { Context } from "./trpc/context.js";
+export type { AppRouter } from "./trpc/router.js";

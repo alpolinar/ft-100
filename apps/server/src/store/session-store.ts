@@ -1,6 +1,6 @@
-import type Redis from "ioredis";
-import type { Session, SessionId } from "../entities/session";
-import { redis } from "../infrastructure/redis";
+import type { Redis } from "ioredis";
+import type { Session, SessionId } from "../entities/session.js";
+import { createRedisClient } from "../infrastructure/redis.js";
 
 export interface ISessionStore {
   get(sessionId: SessionId): Promise<Session | undefined>;
@@ -34,4 +34,4 @@ class SessionStore implements ISessionStore {
   }
 }
 
-export const sessionStore = new SessionStore(redis);
+export const sessionStore = new SessionStore(createRedisClient());

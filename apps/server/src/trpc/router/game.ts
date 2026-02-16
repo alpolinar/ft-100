@@ -3,19 +3,19 @@ import { TRPCError } from "@trpc/server";
 import { pipe } from "remeda";
 import z from "zod";
 import {
-  type GameEvent,
   type Game,
+  type GameEvent,
   type GameSlim,
   type LobbyType,
   type MoveCommand,
   type PlayerId,
   PlayerIdSchema,
   type TurnType,
-} from "../../entities/game";
-import { arrayElement } from "../../utils";
-import { createAsyncQueue } from "../async-queue-helper";
-import { protectedProcedure, router } from "../trpc";
-import { getLogger } from "../../logging";
+} from "../../entities/game.js";
+import { getLogger } from "../../logging/index.js";
+import { arrayElement } from "../../utils/index.js";
+import { createAsyncQueue } from "../async-queue-helper.js";
+import { protectedProcedure, router } from "../trpc.js";
 
 const games = new Map<string, Game>();
 const gameEvents = new EventEmitter();

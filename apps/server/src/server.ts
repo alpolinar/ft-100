@@ -6,11 +6,11 @@ import {
   fastifyTRPCPlugin,
 } from "@trpc/server/adapters/fastify";
 import Fastify from "fastify";
-import { env } from "./env";
-import { bindFastifyLogger } from "./logging";
-import { pinoConfig } from "./logging/config";
-import { createContext } from "./trpc/context";
-import { type AppRouter, appRouter } from "./trpc/router";
+import { env } from "./env.js";
+import { pinoConfig } from "./logging/config.js";
+import { bindFastifyLogger } from "./logging/index.js";
+import { createContext } from "./trpc/context.js";
+import { type AppRouter, appRouter } from "./trpc/router.js";
 
 const allowedOrigins = [env.CLIENT_ORIGIN];
 
