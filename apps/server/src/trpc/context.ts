@@ -1,5 +1,5 @@
-import type { CreateFastifyContextOptions } from "@trpc/server/adapters/fastify";
 import crypto from "node:crypto";
+import type { CreateFastifyContextOptions } from "@trpc/server/adapters/fastify";
 import { match, P } from "ts-pattern";
 import type { PrismaClient } from "../../prisma/generated/prisma/client.js";
 import { prisma } from "../db.js";
@@ -15,11 +15,13 @@ export type Context = {
   prisma: PrismaClient;
 };
 
+type AnonSession = Pick<Context, "user" | "sessionId">;
+
 const logger = getLogger();
 
 async function createAnonymousSession(
   ctx: CreateFastifyContextOptions
-): Promise<Context> {
+): Promise<AnonSession> {
   logger.info("Creating new session...");
   const userId = UserIdSchema.parse(crypto.randomUUID());
   const sessionId = SessionIdSchema.parse(crypto.randomUUID());
@@ -44,55 +46,78 @@ async function createAnonymousSession(
     createdAt: new Date(),
   });
 
-  ctx.res.setCookie("session", sessionId);
+  ctx.res.setCookie("session", sessionId, {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+  });
 
   logger.info({ user, sessionId }, "New Session Created");
 
   return {
     user,
     sessionId,
-    prisma,
   };
 }
 
 export async function createContext(
   ctx: CreateFastifyContextOptions
 ): Promise<Context> {
-  logger.info({ sessionId: ctx.req.cookies.session }, "Current Session");
   return match(ctx.req.cookies.session)
     .with(P.string, async (rawSessionId) => {
-      const sessionId = SessionIdSchema.safeParse(rawSessionId);
+      const parsedSessionId = SessionIdSchema.safeParse(rawSessionId);
 
-      if (!sessionId.success) {
-        logger.warn("Invalid Session Cookie");
-        return createAnonymousSession(ctx);
+      if (!parsedSessionId.success) {
+        logger.warn(
+          { sessionId: parsedSessionId.data },
+          "Invalid Session Cookie"
+        );
+
+        const newSession = await createAnonymousSession(ctx);
+        return {
+          ...newSession,
+          prisma,
+        };
       }
 
-      const session = await sessionStore.get(sessionId.data);
+      const session = await sessionStore.get(parsedSessionId.data);
       if (!session) {
-        logger.info({ sessionId: sessionId.data }, "Session Not Found!");
-        return createAnonymousSession(ctx);
+        logger.info({ sessionId: parsedSessionId.data }, "Session Not Found!");
+
+        const newSession = await createAnonymousSession(ctx);
+        return {
+          ...newSession,
+          prisma,
+        };
       }
 
       const user = await userStore.get(session.userId);
-      logger.info(user, "createContext user");
-
       if (!user) {
         logger.info(
-          { userId: session.userId, sessionId: sessionId.data },
+          { userId: session.userId, sessionId: parsedSessionId.data },
           "Session User Not Found"
         );
-        return createAnonymousSession(ctx);
+
+        const newSession = await createAnonymousSession(ctx);
+        return {
+          ...newSession,
+          prisma,
+        };
       }
 
       return {
         user,
-        sessionId: sessionId.data,
+        sessionId: parsedSessionId.data,
         prisma,
       };
     })
     .otherwise(async () => {
       logger.info("No Current Session");
-      return createAnonymousSession(ctx);
+
+      const newSession = await createAnonymousSession(ctx);
+      return {
+        ...newSession,
+        prisma,
+      };
     });
 }
