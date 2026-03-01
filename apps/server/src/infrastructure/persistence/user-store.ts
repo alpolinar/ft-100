@@ -1,5 +1,5 @@
 import type { Redis } from "ioredis";
-import type { User, UserId } from "./user.js";
+import type { User, UserId } from "../../domain/entities/user/user.js";
 
 export interface IUserStore {
   get(userId: UserId): Promise<User | null>;

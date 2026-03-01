@@ -7,10 +7,10 @@ import { prisma } from "../db.js";
 import {
   type SessionId,
   SessionIdSchema,
-} from "../entities/session/session.js";
-import { SessionStore } from "../entities/session/session-store.js";
-import { type User, UserIdSchema } from "../entities/user/user.js";
-import { UserStore } from "../entities/user/user-store.js";
+} from "../domain/entities/session/session.js";
+import { SessionStore } from "../infrastructure/persistence/session-store.js";
+import { type User, UserIdSchema } from "../domain/entities/user/user.js";
+import { UserStore } from "../infrastructure/persistence/user-store.js";
 
 export type Context = {
   user: User;

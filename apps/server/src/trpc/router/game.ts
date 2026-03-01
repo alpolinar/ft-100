@@ -11,8 +11,8 @@ import {
   type PlayerId,
   PlayerIdSchema,
   type TurnType,
-} from "../../entities/game/game.js";
-import { getLogger } from "../../logging/index.js";
+} from "../../domain/entities/game/game.js";
+import { getLogger } from "../../infrastructure/logging/index.js";
 import { arrayElement } from "../../utils/index.js";
 import { createAsyncQueue } from "../async-queue-helper.js";
 import { protectedProcedure, router } from "../trpc.js";

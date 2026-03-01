@@ -1,5 +1,8 @@
 import type { Redis } from "ioredis";
-import type { Session, SessionId } from "./session.js";
+import type {
+  Session,
+  SessionId,
+} from "../../domain/entities/session/session.js";
 
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days
 

@@ -9,8 +9,8 @@ import {
 import Fastify from "fastify";
 import { env } from "./env.js";
 import { redisClient } from "./infrastructure/redis.js";
-import { pinoConfig } from "./logging/config.js";
-import { bindFastifyLogger } from "./logging/index.js";
+import { pinoConfig } from "./infrastructure/logging/config.js";
+import { bindFastifyLogger } from "./infrastructure/logging/index.js";
 import { createContext } from "./trpc/context.js";
 import { type AppRouter, appRouter } from "./trpc/router.js";
 
@@ -72,6 +72,18 @@ app.register(fastifyTRPCPlugin, {
 
 app.get("/healthcheck", () => {
   return { message: `hello from the server ${new Date()}` };
+});
+
+redisClient.on("connect", () => {
+  app.log.info("Connected to Redis");
+});
+
+redisClient.on("connecting", () => {
+  app.log.info("Connecting to Redis...");
+});
+
+redisClient.on("error", (error) => {
+  app.log.error(error, "Redis connection servered...");
 });
 
 (async () => {
