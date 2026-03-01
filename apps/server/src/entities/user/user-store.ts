@@ -1,5 +1,5 @@
 import type { Redis } from "ioredis";
-import type { User, UserId } from "../entities/user.js";
+import type { User, UserId } from "./user.js";
 
 export interface IUserStore {
   get(userId: UserId): Promise<User | null>;
@@ -8,7 +8,7 @@ export interface IUserStore {
 }
 
 export class UserStore implements IUserStore {
-  constructor(private readonly redis: Redis) { }
+  constructor(private readonly redis: Redis) {}
 
   private getKey(userId: UserId): string {
     return `userId:${userId}`;

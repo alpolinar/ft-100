@@ -1,5 +1,5 @@
 import type { Redis } from "ioredis";
-import type { Session, SessionId } from "../entities/session.js";
+import type { Session, SessionId } from "./session.js";
 
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days
 
@@ -11,7 +11,7 @@ export interface ISessionStore {
 }
 
 export class SessionStore implements ISessionStore {
-  constructor(private readonly redis: Redis) { }
+  constructor(private readonly redis: Redis) {}
 
   private getKey(sessionId: SessionId): string {
     return `sessionId:${sessionId}`;

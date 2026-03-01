@@ -11,7 +11,7 @@ import {
   type PlayerId,
   PlayerIdSchema,
   type TurnType,
-} from "../../entities/game.js";
+} from "../../entities/game/game.js";
 import { getLogger } from "../../logging/index.js";
 import { arrayElement } from "../../utils/index.js";
 import { createAsyncQueue } from "../async-queue-helper.js";

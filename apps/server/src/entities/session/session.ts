@@ -1,5 +1,5 @@
 import z from "zod";
-import type { UserId } from "./user.js";
+import type { UserId } from "../user/user.js";
 
 export const SessionIdSchema = z.string().brand<"SessionId">();
 

@@ -1,12 +1,16 @@
 import crypto from "node:crypto";
+import { TRPCError } from "@trpc/server";
 import type { CreateFastifyContextOptions } from "@trpc/server/adapters/fastify";
 import type { Redis } from "ioredis";
 import type { PrismaClient } from "../../prisma/generated/prisma/client.js";
 import { prisma } from "../db.js";
-import { type SessionId, SessionIdSchema } from "../entities/session.js";
-import { type User, UserIdSchema } from "../entities/user.js";
-import { SessionStore } from "../store/session-store.js";
-import { UserStore } from "../store/user-store.js";
+import {
+  type SessionId,
+  SessionIdSchema,
+} from "../entities/session/session.js";
+import { SessionStore } from "../entities/session/session-store.js";
+import { type User, UserIdSchema } from "../entities/user/user.js";
+import { UserStore } from "../entities/user/user-store.js";
 
 export type Context = {
   user: User;
@@ -82,8 +86,13 @@ async function buildAnonymousContext(
       { err, userId },
       "Redis write failed during session creation — rolling back Postgres row"
     );
-    await prisma.user.delete({ where: { id: userId } }).catch(() => { });
-    throw err;
+    await prisma.user.delete({ where: { id: userId } }).catch((reason) => {
+      logger.error({ userId, reason }, "Failed to delete anonymous session.");
+    });
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Failed to create anonymous session.",
+    });
   }
 
   ctx.res.setCookie("session", sessionId, {
@@ -117,7 +126,10 @@ export async function createContext(
   // ── 2. Malformed cookie ──────────────────────────────────────────────────
   const parsedSessionId = SessionIdSchema.safeParse(rawCookie);
   if (!parsedSessionId.success) {
-    logger.warn({ rawCookie }, "Malformed session cookie — issuing anonymous session");
+    logger.warn(
+      { rawCookie },
+      "Malformed session cookie — issuing anonymous session"
+    );
     return buildAnonymousContext(ctx, redisClient);
   }
 
@@ -136,7 +148,10 @@ export async function createContext(
   let user = await userStore.get(session.userId);
 
   if (!user) {
-    logger.info({ userId: session.userId }, "User not in Redis — attempting Postgres fallback");
+    logger.info(
+      { userId: session.userId },
+      "User not in Redis — attempting Postgres fallback"
+    );
     user = await rehydrateUser(userStore, session.userId);
   }
 
@@ -146,7 +161,7 @@ export async function createContext(
       { sessionId, userId: session.userId },
       "User unrecoverable — deleting orphaned session and issuing anonymous session"
     );
-    await sessionStore.delete(sessionId).catch(() => { });
+    await sessionStore.delete(sessionId).catch(() => {});
     return buildAnonymousContext(ctx, redisClient);
   }
 
