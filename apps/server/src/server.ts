@@ -1,12 +1,14 @@
 import type { FastifyCookieOptions } from "@fastify/cookie";
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
+import redis from "@fastify/redis";
 import {
   type FastifyTRPCPluginOptions,
   fastifyTRPCPlugin,
 } from "@trpc/server/adapters/fastify";
 import Fastify from "fastify";
 import { env } from "./env.js";
+import { redisClient } from "./infrastructure/redis.js";
 import { pinoConfig } from "./logging/config.js";
 import { bindFastifyLogger } from "./logging/index.js";
 import { createContext } from "./trpc/context.js";
@@ -52,6 +54,11 @@ app.register(cookie, {
   },
 } satisfies FastifyCookieOptions);
 
+app.register(redis, {
+  client: redisClient,
+  closeClient: true,
+});
+
 app.register(fastifyTRPCPlugin, {
   prefix: "/api",
   trpcOptions: {
@@ -72,9 +79,13 @@ app.get("/healthcheck", () => {
     await app.listen({
       port: env.APP_PORT,
     });
+
     app.log.info(`Server started in port: ${env.APP_PORT}`);
   } catch (error) {
     app.log.error(error, "Server failed to start");
+
+    app.redis.quit();
+
     process.exit(1);
   }
 })();

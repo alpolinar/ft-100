@@ -1,23 +1,22 @@
 import type { Redis } from "ioredis";
 import type { User, UserId } from "../entities/user.js";
-import { createRedisClient } from "../infrastructure/redis.js";
 
 export interface IUserStore {
-  get(userId: UserId): Promise<User | undefined>;
+  get(userId: UserId): Promise<User | null>;
   create(user: User): Promise<User>;
   delete(userId: UserId): Promise<void>;
 }
 
-export class RedisUserStore implements IUserStore {
-  constructor(private readonly redis: Redis) {}
+export class UserStore implements IUserStore {
+  constructor(private readonly redis: Redis) { }
 
   private getKey(userId: UserId): string {
     return `userId:${userId}`;
   }
 
-  async get(userId: UserId): Promise<User | undefined> {
+  async get(userId: UserId): Promise<User | null> {
     const raw = await this.redis.get(this.getKey(userId));
-    return raw ? JSON.parse(raw) : undefined;
+    return raw ? JSON.parse(raw) : null;
   }
 
   async create(user: User): Promise<User> {
@@ -35,5 +34,3 @@ export class RedisUserStore implements IUserStore {
     await this.redis.del(this.getKey(userId));
   }
 }
-
-export const userStore = new RedisUserStore(createRedisClient());

@@ -1,23 +1,25 @@
 import type { Redis } from "ioredis";
 import type { Session, SessionId } from "../entities/session.js";
-import { createRedisClient } from "../infrastructure/redis.js";
+
+const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days
 
 export interface ISessionStore {
-  get(sessionId: SessionId): Promise<Session | undefined>;
+  get(sessionId: SessionId): Promise<Session | null>;
   create(sessionId: SessionId, session: Session): Promise<void>;
+  refresh(sessionId: SessionId): Promise<void>;
   delete(sessionId: SessionId): Promise<void>;
 }
 
-class SessionStore implements ISessionStore {
-  constructor(private readonly redis: Redis) {}
+export class SessionStore implements ISessionStore {
+  constructor(private readonly redis: Redis) { }
 
   private getKey(sessionId: SessionId): string {
     return `sessionId:${sessionId}`;
   }
 
-  async get(sessionId: SessionId): Promise<Session | undefined> {
+  async get(sessionId: SessionId): Promise<Session | null> {
     const raw = await this.redis.get(this.getKey(sessionId));
-    return raw ? JSON.parse(raw) : undefined;
+    return raw ? JSON.parse(raw) : null;
   }
 
   async create(sessionId: SessionId, session: Session): Promise<void> {
@@ -25,13 +27,15 @@ class SessionStore implements ISessionStore {
       this.getKey(sessionId),
       JSON.stringify(session),
       "EX",
-      60 * 60 * 24 * 7
+      SESSION_TTL_SECONDS
     );
+  }
+
+  async refresh(sessionId: SessionId): Promise<void> {
+    await this.redis.expire(this.getKey(sessionId), SESSION_TTL_SECONDS);
   }
 
   async delete(sessionId: SessionId): Promise<void> {
     await this.redis.del(this.getKey(sessionId));
   }
 }
-
-export const sessionStore = new SessionStore(createRedisClient());

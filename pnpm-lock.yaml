@@ -23,6 +23,9 @@ importers:
       '@fastify/cors':
         specifier: ^11.2.0
         version: 11.2.0
+      '@fastify/redis':
+        specifier: ^7.2.0
+        version: 7.2.0
       '@prisma/adapter-pg':
         specifier: ^7.3.0
         version: 7.3.0
@@ -436,6 +439,9 @@ packages:
 
   '@fastify/proxy-addr@5.1.0':
     resolution: {integrity: sha512-INS+6gh91cLUjB+PVHfu1UqcB76Sqtpyp7bnL+FYojhjygvOPA9ctiD/JDKsyD9Xgu4hUhCSJBPig/w7duNajw==}
+
+  '@fastify/redis@7.2.0':
+    resolution: {integrity: sha512-Ql8emmkajVBCCz0pRjPFZRFI2069Jrp/iufKb5TJwgBeu7B+oZp+GeZIgf+4WX3EX7Vi/h3KTyGf+5DUWI1oFw==}
 
   '@hono/node-server@1.19.9':
     resolution: {integrity: sha512-vHL6w3ecZsky+8P5MD+eFfaGTyCeOHUIFYMGpQGbrBTSmNNoxv0if69rEZ5giu36weC5saFuznL411gRX7bJDw==}
@@ -1679,6 +1685,13 @@ snapshots:
     dependencies:
       '@fastify/forwarded': 3.0.1
       ipaddr.js: 2.3.0
+
+  '@fastify/redis@7.2.0':
+    dependencies:
+      fastify-plugin: 5.1.0
+      ioredis: 5.9.2
+    transitivePeerDependencies:
+      - supports-color
 
   '@hono/node-server@1.19.9(hono@4.11.4)':
     dependencies:
