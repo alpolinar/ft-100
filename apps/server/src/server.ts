@@ -83,11 +83,12 @@ redisClient.on("connecting", () => {
 });
 
 redisClient.on("error", (error) => {
-  app.log.error(error, "Redis connection servered...");
+  app.log.error(error, "Redis connection severed...");
 });
 
 (async () => {
   try {
+    await redisClient.connect();
     await app.listen({
       port: env.APP_PORT,
     });

@@ -293,7 +293,26 @@ const gameRouter = router({
         playerId,
       });
 
-      await ctx.gameStore.set(newState);
+      if (newState.status === "finished") {
+        await ctx.prisma.game.create({
+          data: {
+            id: newState.id,
+            createdBy: newState.createdBy,
+            invitedPlayerId: newState.invitedPlayerId ?? null,
+            players: newState.players as Record<string, string>,
+            lobbyType: newState.lobbyType,
+            currentTurn: newState.currentTurn,
+            globalValue: newState.globalValue,
+            status: newState.status,
+            winnerId: newState.winnerId ?? null,
+            version: newState.version,
+          },
+        });
+        await ctx.gameStore.delete(newState.id);
+        logger.info({ gameId: newState.id }, "Finished game persisted to Postgres and removed from Redis");
+      } else {
+        await ctx.gameStore.set(newState);
+      }
 
       emitGameUpdate({
         gameId: input.gameId,

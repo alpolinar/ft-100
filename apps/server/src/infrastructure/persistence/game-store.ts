@@ -1,4 +1,5 @@
 import type { Game } from "../../domain/entities/game/game.js";
+import { env } from "../../env.js";
 import { BaseRedisStore } from "../../lib/base-redis-store.js";
 
 export interface IGameStore {
@@ -15,10 +16,11 @@ export class GameStore extends BaseRedisStore<Game> implements IGameStore {
   }
 
   async set(game: Game): Promise<void> {
-    await this.setById(game.id, game);
+    await this.setById(game.id, game, env.GAME_TTL_SECONDS);
   }
 
   async delete(gameId: string): Promise<void> {
     await this.deleteById(gameId);
   }
 }
+
