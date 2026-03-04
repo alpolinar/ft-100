@@ -10,6 +10,7 @@ import {
   SessionIdSchema,
 } from "../domain/entities/session/session.js";
 import { type User, UserIdSchema } from "../domain/entities/user/user.js";
+import { GameStore } from "../infrastructure/persistence/game-store.js";
 import { SessionStore } from "../infrastructure/persistence/session-store.js";
 import { UserStore } from "../infrastructure/persistence/user-store.js";
 
@@ -18,6 +19,7 @@ export type Context = {
   sessionId: SessionId;
   prisma: PrismaClient;
   redisClient: Redis;
+  gameStore: GameStore;
 };
 
 // ---------------------------------------------------------------------------
@@ -108,7 +110,7 @@ async function buildAnonymousContext(
 
   logger.info({ userId, sessionId }, "Anonymous session created");
 
-  return { user, sessionId, prisma: db, redisClient };
+  return { user, sessionId, prisma: db, redisClient, gameStore: new GameStore(redisClient) };
 }
 
 // ---------------------------------------------------------------------------
@@ -121,6 +123,7 @@ export async function createContext(
   const logger = ctx.req.log;
   const redisClient = ctx.req.server.redis;
   const rawCookie = ctx.req.cookies.session;
+  const gameStore = new GameStore(redisClient);
   const userStore = new UserStore(redisClient);
   const sessionStore = new SessionStore(redisClient);
 
@@ -176,5 +179,5 @@ export async function createContext(
 
   logger.debug({ userId: user.id, sessionId }, "Session resolved");
 
-  return { user, sessionId, prisma, redisClient };
+  return { user, sessionId, prisma, redisClient, gameStore };
 }

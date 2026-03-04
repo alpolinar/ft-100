@@ -12,12 +12,12 @@ import {
   PlayerIdSchema,
   type TurnType,
 } from "../../domain/entities/game/game.js";
+import type { GameStore } from "../../infrastructure/persistence/game-store.js";
 import { getLogger } from "../../infrastructure/logging/index.js";
 import { arrayElement } from "../../utils/index.js";
 import { createAsyncQueue } from "../async-queue-helper.js";
 import { protectedProcedure, router } from "../trpc.js";
 
-const games = new Map<string, Game>();
 const gameEvents = new EventEmitter();
 const logger = getLogger();
 
@@ -69,7 +69,7 @@ function applyMove(state: Game, cmd: MoveCommand): Game {
   };
 }
 
-function startCoutdown(game: Game, duration = 5) {
+function startCountdown(gameStore: GameStore, game: Game, duration = 5) {
   logger.info({ id: game.id }, "Starting game countdown...");
   if (game.status !== "lobby" && game.status === "countdown") {
     logger.error(
@@ -82,50 +82,53 @@ function startCoutdown(game: Game, duration = 5) {
     return;
   }
 
-  games.set(game.id, { ...game, countdown: duration });
+  // Fire-and-forget the initial set, then start the interval
+  void gameStore.set({ ...game, countdown: duration }).then(() => {
+    const interval = setInterval(() => {
+      void (async () => {
+        const currentGame = await gameStore.get(game.id);
 
-  const interval = setInterval(() => {
-    const currentGame = games.get(game.id);
+        if (!currentGame) {
+          logger.error(game, "Failed to fetch game state");
+          clearInterval(interval);
+          return;
+        }
 
-    if (!currentGame) {
-      logger.error(game, "Failed to fetch game state");
-      clearInterval(interval);
-      return;
-    }
+        const { countdown } = currentGame;
 
-    const { countdown } = currentGame;
+        if (countdown && countdown > 0) {
+          logger.info(`Game is starting in ${countdown}`);
+          const newState: Game = {
+            ...currentGame,
+            status: "countdown",
+          };
 
-    if (countdown && countdown > 0) {
-      logger.info(`Game is starting in ${countdown}`);
-      const newState: Game = {
-        ...currentGame,
-        status: "countdown",
-      };
+          emitGameUpdate({
+            gameId: game.id,
+            payload: newState,
+          });
 
-      emitGameUpdate({
-        gameId: game.id,
-        payload: newState,
-      });
+          await gameStore.set({
+            ...newState,
+            countdown: countdown - 1,
+          });
+        } else {
+          clearInterval(interval);
 
-      games.set(currentGame.id, {
-        ...newState,
-        countdown: countdown - 1,
-      });
-    } else {
-      clearInterval(interval);
+          const newState: Game = { ...currentGame, status: "active" };
 
-      const newState: Game = { ...currentGame, status: "active" };
+          await gameStore.set(newState);
 
-      games.set(currentGame.id, newState);
+          emitGameUpdate({
+            gameId: currentGame.id,
+            payload: newState,
+          });
 
-      emitGameUpdate({
-        gameId: currentGame.id,
-        payload: newState,
-      });
-
-      logger.info("Game has started.");
-    }
-  }, 1000);
+          logger.info("Game has started.");
+        }
+      })();
+    }, 1000);
+  });
 }
 
 function emitGameUpdate({
@@ -140,8 +143,11 @@ function emitGameUpdate({
   });
 }
 
-function findGameOrThrow(gameId: string): Game {
-  const game = games.get(gameId);
+async function findGameOrThrow(
+  gameStore: GameStore,
+  gameId: string
+): Promise<Game> {
+  const game = await gameStore.get(gameId);
 
   if (!game) {
     throw new TRPCError({ code: "BAD_REQUEST", message: "Game Not Found!" });
@@ -166,8 +172,8 @@ function convertGameStateToSlim(state: Game): GameSlim {
 const gameRouter = router({
   getGameState: protectedProcedure
     .input(z.object({ gameId: z.string() }))
-    .query(({ input }): GameSlim => {
-      const gameState = findGameOrThrow(input.gameId);
+    .query(async ({ input, ctx }): Promise<GameSlim> => {
+      const gameState = await findGameOrThrow(ctx.gameStore, input.gameId);
 
       return pipe(gameState, convertGameStateToSlim);
     }),
@@ -178,7 +184,7 @@ const gameRouter = router({
         invitedPlayerId: PlayerIdSchema,
       })
     )
-    .mutation(({ input, ctx }): GameSlim => {
+    .mutation(async ({ input, ctx }): Promise<GameSlim> => {
       const currentPlayer = toPlayerId(ctx.user.id);
       const now = new Date();
 
@@ -200,7 +206,7 @@ const gameRouter = router({
         version: 1,
       };
 
-      games.set(newGame.id, newGame);
+      await ctx.gameStore.set(newGame);
 
       logger.info({ gameId: newGame.id }, "Game Successfully Created");
 
@@ -208,9 +214,9 @@ const gameRouter = router({
     }),
   joinGame: protectedProcedure
     .input(z.object({ gameId: z.string() }))
-    .mutation(({ input, ctx }) => {
+    .mutation(async ({ input, ctx }) => {
       const currentPlayer = toPlayerId(ctx.user.id);
-      const gameState = findGameOrThrow(input.gameId);
+      const gameState = await findGameOrThrow(ctx.gameStore, input.gameId);
 
       logger.info(
         { gameId: input.gameId, userId: currentPlayer },
@@ -243,14 +249,14 @@ const gameRouter = router({
         },
       };
 
-      games.set(input.gameId, newState);
+      await ctx.gameStore.set(newState);
 
       if (
         newState.players.p1 &&
         newState.players.p2 &&
         newState.status === "lobby"
       ) {
-        startCoutdown(newState);
+        startCountdown(ctx.gameStore, newState);
       }
 
       emitGameUpdate({
@@ -272,14 +278,14 @@ const gameRouter = router({
         value: z.number(),
       })
     )
-    .mutation(({ input, ctx }): GameSlim => {
+    .mutation(async ({ input, ctx }): Promise<GameSlim> => {
       logger.info(
         { gameId: input.gameId, userId: ctx.user.id },
         "Player is making a move"
       );
 
       const playerId = toPlayerId(ctx.user.id);
-      const gameState = findGameOrThrow(input.gameId);
+      const gameState = await findGameOrThrow(ctx.gameStore, input.gameId);
 
       const newState = applyMove(gameState, {
         gameId: input.gameId,
@@ -287,7 +293,7 @@ const gameRouter = router({
         playerId,
       });
 
-      games.set(newState.id, newState);
+      await ctx.gameStore.set(newState);
 
       emitGameUpdate({
         gameId: input.gameId,
@@ -300,9 +306,10 @@ const gameRouter = router({
     .input(z.object({ gameId: z.string() }))
     .subscription(async function* ({
       input,
+      ctx,
       signal,
     }): AsyncGenerator<GameEvent, void, unknown> {
-      const game = games.get(input.gameId);
+      const game = await ctx.gameStore.get(input.gameId);
       const key = `game:${input.gameId}`;
 
       const queue = createAsyncQueue<GameEvent>();
