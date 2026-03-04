@@ -1,16 +1,16 @@
 import type { FastifyCookieOptions } from "@fastify/cookie";
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
-import redis from "@fastify/redis";
+import redis, { type FastifyRedisPluginOptions } from "@fastify/redis";
 import {
   type FastifyTRPCPluginOptions,
   fastifyTRPCPlugin,
 } from "@trpc/server/adapters/fastify";
 import Fastify from "fastify";
 import { env } from "./env.js";
-import { redisClient } from "./infrastructure/redis.js";
 import { pinoConfig } from "./infrastructure/logging/config.js";
 import { bindFastifyLogger } from "./infrastructure/logging/index.js";
+import { redisClient } from "./infrastructure/redis.js";
 import { createContext } from "./trpc/context.js";
 import { type AppRouter, appRouter } from "./trpc/router.js";
 
@@ -57,7 +57,7 @@ app.register(cookie, {
 app.register(redis, {
   client: redisClient,
   closeClient: true,
-});
+} satisfies FastifyRedisPluginOptions);
 
 app.register(fastifyTRPCPlugin, {
   prefix: "/api",

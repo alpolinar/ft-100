@@ -4,12 +4,13 @@ import type { CreateFastifyContextOptions } from "@trpc/server/adapters/fastify"
 import type { Redis } from "ioredis";
 import type { PrismaClient } from "../../prisma/generated/prisma/client.js";
 import { prisma } from "../db.js";
+import { env } from "../env.js";
 import {
   type SessionId,
   SessionIdSchema,
 } from "../domain/entities/session/session.js";
-import { SessionStore } from "../infrastructure/persistence/session-store.js";
 import { type User, UserIdSchema } from "../domain/entities/user/user.js";
+import { SessionStore } from "../infrastructure/persistence/session-store.js";
 import { UserStore } from "../infrastructure/persistence/user-store.js";
 
 export type Context = {
@@ -29,9 +30,10 @@ export type Context = {
  */
 async function rehydrateUser(
   userStore: UserStore,
-  userId: string
+  userId: string,
+  db: PrismaClient,
 ): Promise<User | null> {
-  const dbUser = await prisma.user.findUnique({ where: { id: userId } });
+  const dbUser = await db.user.findUnique({ where: { id: userId } });
 
   if (!dbUser) return null;
 
@@ -55,38 +57,40 @@ async function rehydrateUser(
  */
 async function buildAnonymousContext(
   ctx: CreateFastifyContextOptions,
-  redisClient: Redis
+  redisClient: Redis,
+  db: PrismaClient,
+  userStore: UserStore,
+  sessionStore: SessionStore,
 ): Promise<Context> {
   const logger = ctx.req.log;
   logger.info("Creating new anonymous session");
 
-  const userStore = new UserStore(redisClient);
-  const sessionStore = new SessionStore(redisClient);
-
   const userId = UserIdSchema.parse(crypto.randomUUID());
   const sessionId = SessionIdSchema.parse(crypto.randomUUID());
+  const now = new Date();
 
   const user: User = {
     id: userId,
     type: "guest",
-    createdAt: new Date(),
+    createdAt: now,
   };
 
   // 1. Write to Postgres – authoritative record
-  await prisma.user.create({
+  await db.user.create({
     data: { id: user.id, type: user.type },
   });
 
   // 2. Write to Redis – compensate Postgres on failure to keep stores consistent
   try {
     await userStore.create(user);
-    await sessionStore.create(sessionId, { userId, createdAt: new Date() });
+    await sessionStore.create(sessionId, { userId, createdAt: now });
   } catch (err) {
     logger.error(
       { err, userId },
-      "Redis write failed during session creation — rolling back Postgres row"
+      "Redis write failed during session creation — rolling back"
     );
-    await prisma.user.delete({ where: { id: userId } }).catch((reason) => {
+    await userStore.delete(userId).catch(() => { });
+    await db.user.delete({ where: { id: userId } }).catch((reason) => {
       logger.error({ userId, reason }, "Failed to delete anonymous session.");
     });
     throw new TRPCError({
@@ -99,11 +103,12 @@ async function buildAnonymousContext(
     httpOnly: true,
     sameSite: "lax",
     path: "/",
+    secure: env.NODE_ENV === "production",
   });
 
   logger.info({ userId, sessionId }, "Anonymous session created");
 
-  return { user, sessionId, prisma, redisClient };
+  return { user, sessionId, prisma: db, redisClient };
 }
 
 // ---------------------------------------------------------------------------
@@ -116,11 +121,13 @@ export async function createContext(
   const logger = ctx.req.log;
   const redisClient = ctx.req.server.redis;
   const rawCookie = ctx.req.cookies.session;
+  const userStore = new UserStore(redisClient);
+  const sessionStore = new SessionStore(redisClient);
 
   // ── 1. No cookie at all ──────────────────────────────────────────────────
   if (!rawCookie) {
     logger.info("No session cookie — issuing anonymous session");
-    return buildAnonymousContext(ctx, redisClient);
+    return buildAnonymousContext(ctx, redisClient, prisma, userStore, sessionStore);
   }
 
   // ── 2. Malformed cookie ──────────────────────────────────────────────────
@@ -130,18 +137,16 @@ export async function createContext(
       { rawCookie },
       "Malformed session cookie — issuing anonymous session"
     );
-    return buildAnonymousContext(ctx, redisClient);
+    return buildAnonymousContext(ctx, redisClient, prisma, userStore, sessionStore);
   }
 
   const sessionId = parsedSessionId.data;
-  const sessionStore = new SessionStore(redisClient);
-  const userStore = new UserStore(redisClient);
 
   // ── 3. Session not in Redis ──────────────────────────────────────────────
   const session = await sessionStore.get(sessionId);
   if (!session) {
     logger.info({ sessionId }, "Session not found — issuing anonymous session");
-    return buildAnonymousContext(ctx, redisClient);
+    return buildAnonymousContext(ctx, redisClient, prisma, userStore, sessionStore);
   }
 
   // ── 4. Resolve user (Redis cache → Postgres fallback) ───────────────────
@@ -152,7 +157,7 @@ export async function createContext(
       { userId: session.userId },
       "User not in Redis — attempting Postgres fallback"
     );
-    user = await rehydrateUser(userStore, session.userId);
+    user = await rehydrateUser(userStore, session.userId, prisma);
   }
 
   if (!user) {
@@ -161,8 +166,8 @@ export async function createContext(
       { sessionId, userId: session.userId },
       "User unrecoverable — deleting orphaned session and issuing anonymous session"
     );
-    await sessionStore.delete(sessionId).catch(() => {});
-    return buildAnonymousContext(ctx, redisClient);
+    await sessionStore.delete(sessionId).catch(() => { });
+    return buildAnonymousContext(ctx, redisClient, prisma, userStore, sessionStore);
   }
 
   // ── 5. Happy path ────────────────────────────────────────────────────────

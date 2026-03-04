@@ -1,0 +1,24 @@
+import type { Game } from "../../domain/entities/game/game.js";
+import { BaseRedisStore } from "../../lib/base-redis-store.js";
+
+export interface IGameStore {
+  get(gameId: string): Promise<Game | null>;
+  set(game: Game): Promise<void>;
+  delete(gameId: string): Promise<void>;
+}
+
+export class GameStore extends BaseRedisStore<Game> implements IGameStore {
+  protected readonly keyPrefix = "game";
+
+  async get(gameId: string): Promise<Game | null> {
+    return this.getById(gameId);
+  }
+
+  async set(game: Game): Promise<void> {
+    await this.setById(game.id, game);
+  }
+
+  async delete(gameId: string): Promise<void> {
+    await this.deleteById(gameId);
+  }
+}
