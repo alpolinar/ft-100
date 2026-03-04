@@ -4,19 +4,21 @@ import { pipe } from "remeda";
 import z from "zod";
 import {
   type Game,
-  type GameEvent,
-  type GameSlim,
   type LobbyType,
-  type MoveCommand,
   type PlayerId,
   PlayerIdSchema,
   type TurnType,
-} from "../../domain/entities/game/game.js";
+} from "../../domain/entities/game.entity.js";
 import type { GameStore } from "../../infrastructure/persistence/game-store.js";
 import { getLogger } from "../../infrastructure/logging/index.js";
 import { arrayElement } from "../../utils/index.js";
 import { createAsyncQueue } from "../async-queue-helper.js";
 import { protectedProcedure, router } from "../trpc.js";
+import type {
+  GameEvent,
+  GameSlim,
+  MoveCommand,
+} from "../../domain/entities/game-event.entity.js";
 
 const gameEvents = new EventEmitter();
 const logger = getLogger();
@@ -309,7 +311,10 @@ const gameRouter = router({
           },
         });
         await ctx.gameStore.delete(newState.id);
-        logger.info({ gameId: newState.id }, "Finished game persisted to Postgres and removed from Redis");
+        logger.info(
+          { gameId: newState.id },
+          "Finished game persisted to Postgres and removed from Redis"
+        );
       } else {
         await ctx.gameStore.set(newState);
       }

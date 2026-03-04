@@ -1,8 +1,8 @@
 import type {
   Session,
   SessionId,
-} from "../../domain/entities/session/session.js";
-import { BaseRedisStore } from "../../lib/base-redis-store.js";
+} from "../../domain/entities/session.entity.js";
+import { BaseRedisStore } from "./base-redis-store.js";
 
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days
 
@@ -15,7 +15,8 @@ export interface ISessionStore {
 
 export class SessionStore
   extends BaseRedisStore<Session>
-  implements ISessionStore {
+  implements ISessionStore
+{
   protected readonly keyPrefix = "sessionId";
 
   async get(sessionId: SessionId): Promise<Session | null> {

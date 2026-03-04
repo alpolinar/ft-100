@@ -1,6 +1,6 @@
-import type { Game } from "../../domain/entities/game/game.js";
+import type { Game } from "../../domain/entities/game.entity.js";
 import { env } from "../../env.js";
-import { BaseRedisStore } from "../../lib/base-redis-store.js";
+import { BaseRedisStore } from "./base-redis-store.js";
 
 export interface IGameStore {
   get(gameId: string): Promise<Game | null>;
@@ -23,4 +23,3 @@ export class GameStore extends BaseRedisStore<Game> implements IGameStore {
     await this.deleteById(gameId);
   }
 }
-

@@ -1,5 +1,5 @@
-import type { User, UserId } from "../../domain/entities/user/user.js";
-import { BaseRedisStore } from "../../lib/base-redis-store.js";
+import type { User, UserId } from "../../domain/entities/user.entity.js";
+import { BaseRedisStore } from "./base-redis-store.js";
 
 const USER_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days
 

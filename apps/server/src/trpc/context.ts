@@ -3,13 +3,13 @@ import { TRPCError } from "@trpc/server";
 import type { CreateFastifyContextOptions } from "@trpc/server/adapters/fastify";
 import type { Redis } from "ioredis";
 import type { PrismaClient } from "../../prisma/generated/prisma/client.js";
-import { prisma } from "../db.js";
+import { prisma } from "../infrastructure/prisma.js";
 import { env } from "../env.js";
 import {
   type SessionId,
   SessionIdSchema,
-} from "../domain/entities/session/session.js";
-import { type User, UserIdSchema } from "../domain/entities/user/user.js";
+} from "../domain/entities/session.entity.js";
+import { type User, UserIdSchema } from "../domain/entities/user.entity.js";
 import { GameStore } from "../infrastructure/persistence/game-store.js";
 import { SessionStore } from "../infrastructure/persistence/session-store.js";
 import { UserStore } from "../infrastructure/persistence/user-store.js";
@@ -33,7 +33,7 @@ export type Context = {
 async function rehydrateUser(
   userStore: UserStore,
   userId: string,
-  db: PrismaClient,
+  db: PrismaClient
 ): Promise<User | null> {
   const dbUser = await db.user.findUnique({ where: { id: userId } });
 
@@ -62,7 +62,7 @@ async function buildAnonymousContext(
   redisClient: Redis,
   db: PrismaClient,
   userStore: UserStore,
-  sessionStore: SessionStore,
+  sessionStore: SessionStore
 ): Promise<Context> {
   const logger = ctx.req.log;
   logger.info("Creating new anonymous session");
@@ -91,7 +91,7 @@ async function buildAnonymousContext(
       { err, userId },
       "Redis write failed during session creation — rolling back"
     );
-    await userStore.delete(userId).catch(() => { });
+    await userStore.delete(userId).catch(() => {});
     await db.user.delete({ where: { id: userId } }).catch((reason) => {
       logger.error({ userId, reason }, "Failed to delete anonymous session.");
     });
@@ -110,7 +110,13 @@ async function buildAnonymousContext(
 
   logger.info({ userId, sessionId }, "Anonymous session created");
 
-  return { user, sessionId, prisma: db, redisClient, gameStore: new GameStore(redisClient) };
+  return {
+    user,
+    sessionId,
+    prisma: db,
+    redisClient,
+    gameStore: new GameStore(redisClient),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -130,7 +136,13 @@ export async function createContext(
   // ── 1. No cookie at all ──────────────────────────────────────────────────
   if (!rawCookie) {
     logger.info("No session cookie — issuing anonymous session");
-    return buildAnonymousContext(ctx, redisClient, prisma, userStore, sessionStore);
+    return buildAnonymousContext(
+      ctx,
+      redisClient,
+      prisma,
+      userStore,
+      sessionStore
+    );
   }
 
   // ── 2. Malformed cookie ──────────────────────────────────────────────────
@@ -140,7 +152,13 @@ export async function createContext(
       { rawCookie },
       "Malformed session cookie — issuing anonymous session"
     );
-    return buildAnonymousContext(ctx, redisClient, prisma, userStore, sessionStore);
+    return buildAnonymousContext(
+      ctx,
+      redisClient,
+      prisma,
+      userStore,
+      sessionStore
+    );
   }
 
   const sessionId = parsedSessionId.data;
@@ -149,7 +167,13 @@ export async function createContext(
   const session = await sessionStore.get(sessionId);
   if (!session) {
     logger.info({ sessionId }, "Session not found — issuing anonymous session");
-    return buildAnonymousContext(ctx, redisClient, prisma, userStore, sessionStore);
+    return buildAnonymousContext(
+      ctx,
+      redisClient,
+      prisma,
+      userStore,
+      sessionStore
+    );
   }
 
   // ── 4. Resolve user (Redis cache → Postgres fallback) ───────────────────
@@ -169,8 +193,14 @@ export async function createContext(
       { sessionId, userId: session.userId },
       "User unrecoverable — deleting orphaned session and issuing anonymous session"
     );
-    await sessionStore.delete(sessionId).catch(() => { });
-    return buildAnonymousContext(ctx, redisClient, prisma, userStore, sessionStore);
+    await sessionStore.delete(sessionId).catch(() => {});
+    return buildAnonymousContext(
+      ctx,
+      redisClient,
+      prisma,
+      userStore,
+      sessionStore
+    );
   }
 
   // ── 5. Happy path ────────────────────────────────────────────────────────

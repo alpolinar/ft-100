@@ -7,10 +7,12 @@ import {
   fastifyTRPCPlugin,
 } from "@trpc/server/adapters/fastify";
 import Fastify from "fastify";
+import closeWithGrace from "close-with-grace";
 import { env } from "./env.js";
 import { pinoConfig } from "./infrastructure/logging/config.js";
 import { bindFastifyLogger } from "./infrastructure/logging/index.js";
 import { redisClient } from "./infrastructure/redis.js";
+import { prisma } from "./infrastructure/prisma.js";
 import { createContext } from "./trpc/context.js";
 import { type AppRouter, appRouter } from "./trpc/router.js";
 
@@ -74,16 +76,32 @@ app.get("/healthcheck", () => {
   return { message: `hello from the server ${new Date()}` };
 });
 
-redisClient.on("connect", () => {
-  app.log.info("Connected to Redis");
-});
+const closeListeners = closeWithGrace(
+  { delay: 10000 },
+  async function ({ signal, err }) {
+    if (err) {
+      app.log.error(err, "Server closing due to error");
+    } else {
+      app.log.info(`${signal} received, starting graceful shutdown`);
+    }
 
-redisClient.on("connecting", () => {
-  app.log.info("Connecting to Redis...");
-});
+    try {
+      // 1. Drain active Fastify requests and trigger Fastify plugins' onClose hooks
+      // (This automatically closes the Redis connection because of closeClient: true)
+      await app.close();
+      app.log.info("Fastify closed successfully");
 
-redisClient.on("error", (error) => {
-  app.log.error(error, "Redis connection severed...");
+      // 2. Disconnect Prisma connection pool
+      await prisma.$disconnect();
+      app.log.info("Prisma disconnected successfully");
+    } catch (shutdownErr) {
+      app.log.error(shutdownErr, "Error occurred during graceful shutdown");
+    }
+  }
+);
+
+app.addHook("onClose", async () => {
+  closeListeners.uninstall();
 });
 
 (async () => {
@@ -97,7 +115,8 @@ redisClient.on("error", (error) => {
   } catch (error) {
     app.log.error(error, "Server failed to start");
 
-    app.redis.quit();
+    await app.redis.quit();
+    await prisma.$disconnect();
 
     process.exit(1);
   }
