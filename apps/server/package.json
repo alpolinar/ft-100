@@ -21,7 +21,12 @@
     "start": "node dist/server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "clean": "rm -rf node_modules && rm -rf dist",
-    "format": "biome format --write"
+    "format": "biome format --write",
+    "db:migrate": "prisma migrate dev",
+    "db:generate": "prisma generate",
+    "db:studio": "prisma studio",
+    "db:reset": "prisma migrate reset",
+    "db:status": "prisma migrate status"
   },
   "keywords": [],
   "author": "",

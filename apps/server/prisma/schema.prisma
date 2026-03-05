@@ -26,7 +26,8 @@ model User {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
-  games     Game[]
+  wonGames     Game[] @relation("GameWinner")
+  createdGames Game[] @relation("GameCreator")
 
   @@index([deletedAt, createdAt])
 }
@@ -45,6 +46,7 @@ enum GameStatus {
 
 model Game {
   id              String     @id @default(uuid())
+  creator         User       @relation("GameCreator", fields: [createdBy], references: [id])
   createdBy       String
   invitedPlayerId String?
   players         Json
@@ -52,9 +54,8 @@ model Game {
   currentTurn     String
   globalValue     Int
   status          GameStatus
-  winner          User?      @relation(fields: [winnerId], references: [id])
+  winner          User?      @relation("GameWinner", fields: [winnerId], references: [id])
   winnerId        String?
-  countdown       Int?
   version         Int
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
