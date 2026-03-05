@@ -1,5 +1,4 @@
-import { gameRouter } from "./routes/game/game.route.js";
-import { userRouter } from "./routes/user/user.route.js";
+import { gameRouter, userRouter } from "./routes/index.js";
 import { router } from "./trpc.js";
 
 export const appRouter = router({
