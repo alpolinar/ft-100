@@ -12,6 +12,7 @@
     "test": "turn run test"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.3.13",
     "turbo": "^2.7.6",
     "typescript": "5.9.2"
   },

@@ -10,9 +10,9 @@ import {
   SessionIdSchema,
 } from "../domain/entities/session.entity.js";
 import { type User, UserIdSchema } from "../domain/entities/user.entity.js";
-import { GameStore } from "../infrastructure/persistence/game-store.js";
-import { SessionStore } from "../infrastructure/persistence/session-store.js";
-import { UserStore } from "../infrastructure/persistence/user-store.js";
+import { GameStore } from "../infrastructure/persistence/game.store.js";
+import { SessionStore } from "../infrastructure/persistence/session.store.js";
+import { UserStore } from "../infrastructure/persistence/user.store.js";
 
 export type Context = {
   user: User;
@@ -91,7 +91,7 @@ async function buildAnonymousContext(
       { err, userId },
       "Redis write failed during session creation — rolling back"
     );
-    await userStore.delete(userId).catch(() => {});
+    await userStore.delete(userId).catch(() => { });
     await db.user.delete({ where: { id: userId } }).catch((reason) => {
       logger.error({ userId, reason }, "Failed to delete anonymous session.");
     });
@@ -193,7 +193,7 @@ export async function createContext(
       { sessionId, userId: session.userId },
       "User unrecoverable — deleting orphaned session and issuing anonymous session"
     );
-    await sessionStore.delete(sessionId).catch(() => {});
+    await sessionStore.delete(sessionId).catch(() => { });
     return buildAnonymousContext(
       ctx,
       redisClient,

@@ -9,16 +9,16 @@ import {
   PlayerIdSchema,
   type TurnType,
 } from "../../domain/entities/game.entity.js";
-import type { GameStore } from "../../infrastructure/persistence/game-store.js";
-import { getLogger } from "../../infrastructure/logging/index.js";
-import { arrayElement } from "../../utils/index.js";
-import { createAsyncQueue } from "../async-queue-helper.js";
-import { protectedProcedure, router } from "../trpc.js";
 import type {
   GameEvent,
   GameSlim,
   MoveCommand,
 } from "../../domain/entities/game-event.entity.js";
+import { getLogger } from "../../infrastructure/logging/index.js";
+import type { GameStore } from "../../infrastructure/persistence/game.store.js";
+import { arrayElement } from "../../utils/index.js";
+import { createAsyncQueue } from "../async-queue-helper.js";
+import { protectedProcedure, router } from "../trpc.js";
 
 const gameEvents = new EventEmitter();
 const logger = getLogger();
