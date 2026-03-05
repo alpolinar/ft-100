@@ -1,0 +1,66 @@
+import { pipe } from "remeda";
+import z from "zod";
+import type { GameSlim } from "../../../domain/entities/game-event.entity.js";
+import { protectedProcedure } from "../../trpc.js";
+import {
+  applyMove,
+  convertGameStateToSlim,
+  emitGameUpdate,
+  findGameOrThrow,
+  toPlayerId,
+} from "./helpers.js";
+import { logger } from "./shared.js";
+
+export const makeMove = protectedProcedure
+  .input(
+    z.object({
+      gameId: z.string(),
+      value: z.number(),
+    })
+  )
+  .mutation(async ({ input, ctx }): Promise<GameSlim> => {
+    logger.info(
+      { gameId: input.gameId, userId: ctx.user.id },
+      "Player is making a move"
+    );
+
+    const playerId = toPlayerId(ctx.user.id);
+    const gameState = await findGameOrThrow(ctx.gameStore, input.gameId);
+
+    const newState = applyMove(gameState, {
+      gameId: input.gameId,
+      value: input.value,
+      playerId,
+    });
+
+    if (newState.status === "finished") {
+      await ctx.prisma.game.create({
+        data: {
+          id: newState.id,
+          createdBy: newState.createdBy,
+          invitedPlayerId: newState.invitedPlayerId ?? null,
+          players: newState.players as Record<string, string>,
+          lobbyType: newState.lobbyType,
+          currentTurn: newState.currentTurn,
+          globalValue: newState.globalValue,
+          status: newState.status,
+          winnerId: newState.winnerId ?? null,
+          version: newState.version,
+        },
+      });
+      await ctx.gameStore.delete(newState.id);
+      logger.info(
+        { gameId: newState.id },
+        "Finished game persisted to Postgres and removed from Redis"
+      );
+    } else {
+      await ctx.gameStore.set(newState);
+    }
+
+    emitGameUpdate({
+      gameId: input.gameId,
+      payload: newState,
+    });
+
+    return pipe(newState, convertGameStateToSlim);
+  });

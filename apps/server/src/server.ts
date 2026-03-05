@@ -6,13 +6,13 @@ import {
   type FastifyTRPCPluginOptions,
   fastifyTRPCPlugin,
 } from "@trpc/server/adapters/fastify";
-import Fastify from "fastify";
 import closeWithGrace from "close-with-grace";
+import Fastify from "fastify";
 import { env } from "./env.js";
 import { pinoConfig } from "./infrastructure/logging/config.js";
 import { bindFastifyLogger } from "./infrastructure/logging/index.js";
-import { redisClient } from "./infrastructure/redis.js";
 import { prisma } from "./infrastructure/prisma.js";
+import { redisClient } from "./infrastructure/redis.js";
 import { createContext } from "./trpc/context.js";
 import { type AppRouter, appRouter } from "./trpc/router.js";
 
@@ -78,7 +78,7 @@ app.get("/healthcheck", () => {
 
 const closeListeners = closeWithGrace(
   { delay: 10000 },
-  async function ({ signal, err }) {
+  async ({ signal, err }) => {
     if (err) {
       app.log.error(err, "Server closing due to error");
     } else {

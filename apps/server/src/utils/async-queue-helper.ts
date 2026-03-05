@@ -15,8 +15,10 @@ export function createAsyncQueue<T>() {
     },
 
     async next(): Promise<T> {
-      if (queue.length > 0) {
-        return queue.shift()!;
+      const item = queue.shift();
+
+      if (item) {
+        return item;
       }
 
       return new Promise<T>((res) => {
