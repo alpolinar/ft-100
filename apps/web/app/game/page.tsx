@@ -1,4 +1,4 @@
-import LeaderBoard from "../../game/views/leaderboard";
+import LeaderBoard from "../../features/game/views/leaderboard";
 
 export default async function LeaderboardPage() {
   return (

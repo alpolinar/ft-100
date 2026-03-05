@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useState } from "react";
 import type { GameEvent } from "server/types";
 import { match } from "ts-pattern";
-import { useTRPC } from "../../lib/trpc";
+import { useTRPC } from "../../../lib/trpc";
 import { Game } from "../views/game";
 
 export type GameProps = Readonly<{

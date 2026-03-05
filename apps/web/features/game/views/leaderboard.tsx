@@ -3,7 +3,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { type RouterInputs, useTRPC } from "../../lib/trpc";
+import { type RouterInputs, useTRPC } from "../../../lib/trpc";
 
 export default function LeaderBoard() {
   const trpc = useTRPC();

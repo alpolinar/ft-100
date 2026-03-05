@@ -1,4 +1,4 @@
-import { GameContainer } from "../../../game/container/game-container";
+import { GameContainer } from "../../../features/game/containers/game-container";
 
 export default async function GamePage(props: PageProps<"/game/[gameId]">) {
   const { gameId } = await props.params;

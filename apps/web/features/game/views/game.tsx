@@ -4,7 +4,7 @@ import { useForm } from "@tanstack/react-form";
 import { useQuery } from "@tanstack/react-query";
 import type { PlayerId } from "server/types";
 import z from "zod";
-import { useTRPC } from "../../lib/trpc";
+import { useTRPC } from "../../../lib/trpc";
 
 export type GameProps = Readonly<{
   currentPlayerId?: PlayerId;
