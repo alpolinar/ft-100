@@ -1,5 +1,9 @@
 import { TRPCError } from "@trpc/server";
-import type { Game, PlayerId } from "../../../domain/entities/game.entity.js";
+import type {
+  Game,
+  Move,
+  PlayerId,
+} from "../../../domain/entities/game.entity.js";
 import type {
   GameEvent,
   GameSlim,
@@ -38,12 +42,19 @@ export function applyMove(state: Game, cmd: MoveCommand): Game {
   }
 
   const nextValue = state.globalValue + cmd.value;
-
   const isWinningMove = nextValue >= 100;
+
+  const move: Move = {
+    playerId: cmd.playerId,
+    value: cmd.value,
+    moveNumber: state.moves.length + 1,
+    timestamp: new Date(),
+  };
 
   return {
     ...state,
     globalValue: nextValue,
+    moves: [...state.moves, move],
     status: isWinningMove ? "finished" : "active",
     winnerId: isWinningMove ? cmd.playerId : undefined,
     currentTurn: isWinningMove
@@ -153,5 +164,6 @@ export function convertGameStateToSlim(state: Game): GameSlim {
     globalValue: state.globalValue,
     invitedPlayerId: state.invitedPlayerId,
     winnerId: state.winnerId,
+    moves: state.moves,
   };
 }

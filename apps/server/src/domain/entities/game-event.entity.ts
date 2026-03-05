@@ -1,4 +1,4 @@
-import { Game, PlayerId } from "./game.entity.js";
+import type { Game, PlayerId } from "./game.entity.js";
 
 export type GameSlim = Omit<
   Game,

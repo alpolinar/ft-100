@@ -57,7 +57,20 @@ model Game {
   winner          User?      @relation("GameWinner", fields: [winnerId], references: [id])
   winnerId        String?
   version         Int
+  moves           Move[]
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
   deletedAt       DateTime?
+}
+
+model Move {
+  id         String   @id @default(uuid())
+  game       Game     @relation(fields: [gameId], references: [id])
+  gameId     String
+  playerId   String
+  value      Int
+  moveNumber Int
+  createdAt  DateTime @default(now())
+
+  @@index([gameId])
 }

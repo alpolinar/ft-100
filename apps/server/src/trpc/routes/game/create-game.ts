@@ -37,6 +37,7 @@ export const createGame = protectedProcedure
       },
       globalValue: 0,
       status: "lobby",
+      moves: [],
       createdAt: now,
       updatedAt: now,
       version: 1,

@@ -15,6 +15,13 @@ export type LobbyType = "open" | "invite";
 
 export type TurnType = "p1" | "p2";
 
+export type Move = Readonly<{
+  playerId: PlayerId;
+  value: number;
+  moveNumber: number;
+  timestamp: Date;
+}>;
+
 export type Game = Readonly<{
   id: string;
   createdBy: PlayerId;
@@ -26,6 +33,7 @@ export type Game = Readonly<{
   status: GameStateStatus;
   winnerId?: PlayerId;
   countdown?: number;
+  moves: Move[];
   version: number; // optimistic locking
   createdAt: Date;
   updatedAt: Date;
