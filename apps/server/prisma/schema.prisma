@@ -26,10 +26,28 @@ model User {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
+  lastLoginAt  DateTime?
   wonGames     Game[] @relation("GameWinner")
   createdGames Game[] @relation("GameCreator")
+  passkeys     Passkey[]
 
   @@index([deletedAt, createdAt])
+}
+
+model Passkey {
+  id             String   @id // credential ID, base64url-encoded
+  publicKey      Bytes    // COSE public key
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  webAuthnUserId String   // WebAuthn user handle, base64url-encoded
+  counter        BigInt   @default(0) // signature counter for replay protection
+  deviceType     String   // "singleDevice" | "multiDevice"
+  backedUp       Boolean  @default(false)
+  transports     String[] // e.g. ["internal", "hybrid"]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId])
 }
 
 enum LobbyType {

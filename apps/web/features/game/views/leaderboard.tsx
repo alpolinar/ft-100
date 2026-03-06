@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { type RouterInputs, useTRPC } from "../../../lib/trpc";
@@ -54,7 +55,16 @@ export default function LeaderBoard() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-      <p>LeaderBoard</p>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <p>LeaderBoard</p>
+        <Link href="/auth">Manage Account</Link>
+      </div>
       <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
         <input
           type="text"

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "",
   "private": true,
-  "main": "dist/server.js",
+  "main": "dist/src/server.js",
   "type": "module",
   "engines": {
     "node": "24",
@@ -11,14 +11,14 @@
   },
   "exports": {
     "./types": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
     }
   },
   "scripts": {
     "dev": "pnpm build & tsx watch src/server.ts",
     "build": "tsc -p tsconfig.json",
-    "start": "node dist/server.js",
+    "start": "node dist/src/server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "clean": "rm -rf node_modules && rm -rf dist",
     "format": "biome format --write",
@@ -37,6 +37,7 @@
     "@fastify/redis": "^7.2.0",
     "@prisma/adapter-pg": "^7.3.0",
     "@prisma/client": "^7.3.0",
+    "@simplewebauthn/server": "^13.2.3",
     "@trpc/server": "^11.9.0",
     "close-with-grace": "^2.5.0",
     "dotenv": "^17.2.3",

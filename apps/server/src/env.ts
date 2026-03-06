@@ -11,6 +11,8 @@ const envSchema = z.object({
   REDIS_PASSWORD: z.string().optional(),
   GAME_TTL_SECONDS: z.coerce.number().default(60 * 60 * 24), // 24 hours
   DATABASE_URL: z.string().min(1),
+  RP_ID: z.string().min(1).default("localhost"),
+  RP_NAME: z.string().min(1).default("FT-100"),
 });
 
 const env = envSchema.parse(process.env);
