@@ -1,3 +1,7 @@
+// package imports to make type augmentation available to frontend
+import "@fastify/cookie";
+import "@fastify/redis";
+
 import crypto from "node:crypto";
 import { TRPCError } from "@trpc/server";
 import type { CreateFastifyContextOptions } from "@trpc/server/adapters/fastify";
