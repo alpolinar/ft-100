@@ -31,6 +31,7 @@ services:
       POSTGRES_USER: ft100user
       POSTGRES_DB: ft100db
       POSTGRES_PORT: 5432
+      PGDATA: /var/lib/postgresql/data/pgdata
     ports:
       - "5432:5432"
     networks:
