@@ -9,7 +9,9 @@
     "clean": "turbo run clean",
     "clean:modules": "rm -rf node_modules",
     "format": "turbo run format",
-    "test": "turn run test"
+    "test": "turbo run test",
+    "test:integration": "turbo run test:integration",
+    "test:e2e": "turbo run test:e2e"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.13",

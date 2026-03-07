@@ -1,43 +1,37 @@
 {
-    "$schema": "https://turborepo.com/schema.json",
-    "ui": "tui",
-    "tasks": {
-        "build": {
-            "dependsOn": [
-                "^build"
-            ],
-            "inputs": [
-                "$TURBO_DEFAULT$",
-                ".env*"
-            ],
-            "outputs": [
-                ".next/**",
-                "!.next/cache/**"
-            ]
-        },
-        "lint": {
-            "dependsOn": [
-                "^lint"
-            ]
-        },
-        "check-types": {
-            "dependsOn": [
-                "^check-types"
-            ]
-        },
-        "dev": {
-            "cache": false,
-            "persistent": true
-        },
-        "clean": {
-            "dependsOn": [
-                "^clean"
-            ]
-        },
-        "format": {
-            "dependsOn": [
-                "^format"
-            ]
-        }
+  "$schema": "https://turborepo.com/schema.json",
+  "ui": "tui",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [".next/**", "!.next/cache/**"]
+    },
+    "lint": {
+      "dependsOn": ["^lint"]
+    },
+    "check-types": {
+      "dependsOn": ["^check-types"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "clean": {
+      "dependsOn": ["^clean"]
+    },
+    "format": {
+      "dependsOn": ["^format"]
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"]
+    },
+    "test:integration": {
+      "outputs": ["coverage/**"]
+    },
+    "test:e2e": {
+      "outputs": ["playwright-report/**", "test-results/**"]
     }
+  }
 }

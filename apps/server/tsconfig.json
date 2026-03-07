@@ -7,6 +7,6 @@
     "allowSyntheticDefaultImports": true,
     "noEmit": false
   },
-  "include": ["src", "prisma/generated"],
+  "include": ["src", "prisma/generated", "tests"],
   "exclude": ["node_modules", "dist"]
 }
