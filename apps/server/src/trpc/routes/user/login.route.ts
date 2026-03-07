@@ -173,7 +173,7 @@ export const verifyPasskeyAuthentication = protectedProcedure
     const authenticatedUser = {
       id: authenticatedUserId,
       type: passkey.user.type as "guest" | "registered",
-      username: passkey.user.username ?? undefined,
+      username: passkey.user.username,
       createdAt: passkey.user.createdAt,
     } satisfies User;
     await userStore.create(authenticatedUser);

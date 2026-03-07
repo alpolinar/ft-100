@@ -46,6 +46,7 @@ async function rehydrateUser(
   const user: User = {
     id: UserIdSchema.parse(dbUser.id),
     type: dbUser.type,
+    username: dbUser.username,
     createdAt: dbUser.createdAt,
   };
 
@@ -78,12 +79,13 @@ async function buildAnonymousContext(
   const user: User = {
     id: userId,
     type: "guest",
+    username: `Guest_${Math.floor(1000 + Math.random() * 9000).toString()}`,
     createdAt: now,
   };
 
   // 1. Write to Postgres – authoritative record
   await db.user.create({
-    data: { id: user.id, type: user.type },
+    data: { id: user.id, type: user.type, username: user.username },
   });
 
   // 2. Write to Redis – compensate Postgres on failure to keep stores consistent

@@ -7,6 +7,6 @@ export type UserId = z.infer<typeof UserIdSchema>;
 export type User = {
   id: UserId;
   type: "guest" | "registered";
-  username?: string;
+  username: string;
   createdAt: Date;
 };
