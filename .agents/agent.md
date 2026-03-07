@@ -21,19 +21,22 @@
   - `pnpm dev` — start all apps via Turborepo
   - `pnpm build` — build all apps
   - `pnpm lint` / `pnpm format` — lint and format via Turborepo
+  - `pnpm test` — run all tests
 
 ## Monorepo Structure
 
 ```
 ft-100/
 ├── apps/
-│   ├── server/          # Backend API
-│   └── web/             # Frontend
+│   ├── server/          # Backend API (Fastify + tRPC)
+│   └── web/             # Frontend (Next.js Application)
 ├── packages/
 │   ├── typescript-config/ # Shared tsconfig bases
-│   └── ui/              # Shared UI components
-└── services/
-    └── docker-compose.yml # Redis + Postgres
+│   └── ui/              # Shared UI components (React)
+├── services/
+│   └── docker-compose.yml # Infrastructure (Redis + Postgres)
+└── .agents/
+    └── agent.md         # This guide
 ```
 
 ## Apps
@@ -45,6 +48,7 @@ ft-100/
 - **Cache/State**: Redis via ioredis (game state stored in Redis, finished games persisted to Postgres)
 - **Logging**: Pino (with pino-pretty in dev)
 - **Env validation**: Zod schema in `src/env.ts`
+- **Testing**: Vitest + Testcontainers (Postgres/Redis) + Supertest
 - **Dev command**: `pnpm --filter server dev` (uses tsx watch)
 - **Build**: `pnpm --filter server build` (tsc)
 - **Port**: 3001 (default via `APP_PORT`)
@@ -66,6 +70,7 @@ ft-100/
 - **Framework**: Next.js 16 (App Router) + React 19
 - **Data**: tRPC client + TanStack React Query
 - **Forms**: TanStack React Form
+- **Auth**: Passkey support via `@simplewebauthn/browser`
 - **Dev command**: `pnpm --filter web dev` (port 3000)
 
 ## Infrastructure (Docker Compose)
@@ -73,9 +78,20 @@ ft-100/
 Located at `services/docker-compose.yml`:
 - **Redis 7** — port 6379, persistent (AOF)
 - **RedisInsight** — port 5540 (GUI for Redis)
-- **PostgreSQL 18** — port 5432, user: `ft100user`, db: `ft100db`
+- **PostgreSQL 18.1** — port 5432, user: `ft100user`, db: `ft100db`, password: `ft100password`
 
 Start with: `docker compose -f services/docker-compose.yml up -d`
+
+## Testing Infrastructure
+
+- **Server Tests**:
+  - Located in `apps/server/tests/`
+  - **Unit Tests**: Logic tests in `tests/unit/`
+  - **Integration Tests**: API and DB tests in `tests/integration/` using Testcontainers
+  - **Setup**: `tests/setup/global.setup.ts` manages container lifecycle
+- **Web Tests**:
+  - Located in `apps/web/`
+  - Vitest + Testing Library + jsdom for component testing
 
 ## Code Quality
 
@@ -88,8 +104,9 @@ Start with: `docker compose -f services/docker-compose.yml up -d`
 
 ## Key Conventions
 
-- All TypeScript files use **ESM** (`"type": "module"`) — imports must use `.js` extensions
+- All TypeScript files use **ESM** (`"type": "module"`) — imports must use **.js** extensions
 - Domain entities live in `apps/server/src/domain/entities/`
 - Infrastructure (Redis stores, logging) lives in `apps/server/src/infrastructure/`
 - tRPC routes live in `apps/server/src/trpc/routes/`
 - Prisma schema at `apps/server/prisma/schema.prisma`, generated client at `prisma/generated/prisma`
+- Base Redis Store: All Redis stores extend `BaseRedisStore` for common functionality

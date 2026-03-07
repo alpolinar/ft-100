@@ -56,7 +56,7 @@ export const verifyPasskeyRegistration = protectedProcedure
   .input(
     z.object({
       username: z.string().min(1).max(64),
-      email: z.string().email().optional(),
+      email: z.email().optional(),
       response: z.any(), // The RegistrationResponseJSON from the browser
     })
   )
