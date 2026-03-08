@@ -16,13 +16,11 @@ const envSchema = z.object({
   RP_NAME: z.string().min(1).default("FT-100"),
 });
 
-const env = process.env.SKIP_ENV_VALIDATION
-  ? (process.env as unknown as z.infer<typeof envSchema>)
-  : envSchema
-      .refine((data) => data.REDIS_URL || data.REDIS_SERVICE_HOST, {
-        message: "Either REDIS_URL or REDIS_SERVICE_HOST must be provided",
-        path: ["REDIS_URL"],
-      })
-      .parse(process.env);
+const env = envSchema
+  .refine((data) => data.REDIS_URL || data.REDIS_SERVICE_HOST, {
+    message: "Either REDIS_URL or REDIS_SERVICE_HOST must be provided",
+    path: ["REDIS_URL"],
+  })
+  .parse(process.env);
 
 export { env };
