@@ -3,10 +3,10 @@ import "@fastify/cookie";
 import "@fastify/redis";
 
 import crypto from "node:crypto";
+import type { PrismaClient } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import type { CreateFastifyContextOptions } from "@trpc/server/adapters/fastify";
 import type { Redis } from "ioredis";
-import type { PrismaClient } from "../../prisma/generated/prisma/client.js";
 import {
   type SessionId,
   SessionIdSchema,

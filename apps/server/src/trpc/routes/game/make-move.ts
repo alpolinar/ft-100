@@ -34,34 +34,50 @@ export const makeMove = protectedProcedure
     });
 
     if (newState.status === "finished") {
-      await ctx.prisma.$transaction(async (tx) => {
-        await tx.game.create({
-          data: {
-            id: newState.id,
-            createdBy: newState.createdBy,
-            invitedPlayerId: newState.invitedPlayerId ?? null,
-            players: newState.players as Record<string, string>,
-            lobbyType: newState.lobbyType,
-            currentTurn: newState.currentTurn,
-            globalValue: newState.globalValue,
-            status: newState.status,
-            winnerId: newState.winnerId ?? null,
-            version: newState.version,
-          },
-        });
-
-        if (newState.moves.length > 0) {
-          await tx.move.createMany({
-            data: newState.moves.map((m) => ({
-              gameId: newState.id,
-              playerId: m.playerId,
-              value: m.value,
-              moveNumber: m.moveNumber,
-              createdAt: m.timestamp,
-            })),
+      await ctx.prisma
+        .$transaction(async (tx) => {
+          await tx.game.create({
+            data: {
+              id: newState.id,
+              createdBy: newState.createdBy,
+              invitedPlayerId: newState.invitedPlayerId ?? null,
+              players: newState.players as Record<string, string>,
+              lobbyType: newState.lobbyType,
+              currentTurn: newState.currentTurn,
+              globalValue: newState.globalValue,
+              status: newState.status,
+              winnerId: newState.winnerId ?? null,
+              version: newState.version,
+            },
           });
-        }
-      });
+
+          if (newState.moves.length > 0) {
+            await tx.move.createMany({
+              data: newState.moves.map((m) => ({
+                gameId: newState.id,
+                playerId: m.playerId,
+                value: m.value,
+                moveNumber: m.moveNumber,
+                createdAt: m.timestamp,
+              })),
+            });
+          }
+        })
+        .catch((err: unknown) => {
+          if (
+            err &&
+            typeof err === "object" &&
+            "code" in err &&
+            (err as { code: unknown }).code === "P2002"
+          ) {
+            logger.warn(
+              { gameId: newState.id },
+              "Game already persisted by another concurrent request (P2002)"
+            );
+          } else {
+            throw err;
+          }
+        });
       await ctx.gameStore.delete(newState.id);
       logger.info(
         { gameId: newState.id },
