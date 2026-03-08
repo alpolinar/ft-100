@@ -129,10 +129,10 @@ export function startCountdown(gameStore: GameStore, game: Game, duration = 5) {
   });
 }
 
-export function emitGameUpdate({
+export async function emitGameUpdate({
   gameId,
   payload,
-}: Readonly<{ gameId: string; payload: Game }>): boolean {
+}: Readonly<{ gameId: string; payload: Game }>): Promise<boolean> {
   logger.info("Emitting Game State Update");
 
   return gameEvents.emit<GameEvent>(`game:${gameId}`, {

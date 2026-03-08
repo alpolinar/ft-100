@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: ft-100-server
+    runtime: docker
+    dockerContext: .
+    dockerfilePath: apps/server/Dockerfile
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: APP_PORT
+        value: 10000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ft-100-db
+          property: connectionString
+      - key: REDIS_URL
+        sync: false
+      - key: CLIENT_ORIGIN
+        sync: false
+      - key: SECRET
+        generateValue: true
+
+databases:
+  - name: ft-100-db
+    plan: free
+    databaseName: ft-100
+    user: ft-100-user

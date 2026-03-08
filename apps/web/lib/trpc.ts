@@ -9,6 +9,7 @@ import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import { createTRPCContext } from "@trpc/tanstack-react-query";
 import type { AppRouter } from "server/types";
 import superjson from "superjson";
+import { env } from "./env";
 
 function makeQueryClient() {
   return new QueryClient({
@@ -41,16 +42,25 @@ export function getQueryClient() {
   }
 }
 
+const getBaseUrl = () => {
+  if (typeof window !== "undefined") return ""; // browser should use relative url
+  if (env.NEXT_PUBLIC_API_URL) return env.NEXT_PUBLIC_API_URL; // SSR should use absolute url
+  return `http://localhost:${env.PORT}`; // dev fallback
+};
+
+const baseUrl = getBaseUrl();
+const apiUrl = `${baseUrl}/api`;
+
 export const client = createTRPCClient<AppRouter>({
   links: [
     splitLink({
       condition: (op) => op.type === "subscription",
       true: httpSubscriptionLink({
-        url: "/api",
+        url: apiUrl,
         transformer: superjson,
       }),
       false: httpBatchLink({
-        url: "/api",
+        url: apiUrl,
         transformer: superjson,
         fetch: (url, options) => {
           return fetch(url, {

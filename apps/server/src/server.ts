@@ -16,7 +16,11 @@ import { redisClient } from "./infrastructure/redis.js";
 import { createContext } from "./trpc/context.js";
 import { type AppRouter, appRouter } from "./trpc/router.js";
 
-const allowedOrigins = [env.CLIENT_ORIGIN];
+const allowedOrigins = [
+  env.CLIENT_ORIGIN.replace(/\/$/, ""), // strip trailing slash
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+];
 
 const app = Fastify({
   logger: pinoConfig,
@@ -32,11 +36,14 @@ app.register(cors, {
     // Allow no origin (e.g., mobile apps, curl, Postman)
     if (!origin) return callback(null, true);
 
-    if (allowedOrigins.includes(origin)) {
+    const normalizedOrigin = origin.replace(/\/$/, "");
+
+    if (allowedOrigins.includes(normalizedOrigin)) {
       return callback(null, true);
     }
 
     // Reject unknown origins
+    app.log.warn({ origin }, "CORS rejection");
     return callback(new Error("Not allowed by CORS"), false);
   },
 

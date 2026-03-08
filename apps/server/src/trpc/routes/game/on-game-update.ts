@@ -26,13 +26,13 @@ export const onGameUpdate = protectedProcedure
       });
     }
 
-    gameEvents.on(key, handler);
+    const listener = gameEvents.on(key, handler);
 
     try {
       while (!signal?.aborted) {
         yield await queue.next();
       }
     } finally {
-      gameEvents.off(key, handler);
+      gameEvents.off(key, listener);
     }
   });
