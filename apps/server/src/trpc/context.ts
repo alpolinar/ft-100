@@ -98,7 +98,7 @@ async function buildAnonymousContext(
       "Redis write failed during session creation — rolling back"
     );
     await userStore.delete(userId).catch(() => {});
-    await db.user.delete({ where: { id: userId } }).catch((reason) => {
+    await db.user.delete({ where: { id: userId } }).catch((reason: unknown) => {
       logger.error({ userId, reason }, "Failed to delete anonymous session.");
     });
     throw new TRPCError({
@@ -199,7 +199,7 @@ export async function createContext(
       { sessionId, userId: session.userId },
       "User unrecoverable — deleting orphaned session and issuing anonymous session"
     );
-    await sessionStore.delete(sessionId).catch((reason) => {
+    await sessionStore.delete(sessionId).catch((reason: unknown) => {
       logger.error(
         { sessionId, userId: session.userId, reason },
         "Failed to delete orphaned session"

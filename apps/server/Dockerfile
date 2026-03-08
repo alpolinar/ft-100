@@ -1,4 +1,4 @@
-FROM node:22-slim AS base
+FROM node:24-slim AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
@@ -14,6 +14,8 @@ WORKDIR /app
 COPY --from=builder /app/out/json/ .
 RUN pnpm install
 COPY --from=builder /app/out/full/ .
+# Generate Prisma client before building
+RUN pnpm --filter server db:generate
 RUN pnpm turbo run build --filter=server
 
 FROM base AS runner
