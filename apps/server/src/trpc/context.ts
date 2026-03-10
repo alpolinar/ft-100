@@ -6,13 +6,17 @@ import crypto from "node:crypto";
 import type { PrismaClient } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import type { CreateFastifyContextOptions } from "@trpc/server/adapters/fastify";
+import type { FastifyReply } from "fastify";
 import type { Redis } from "ioredis";
 import {
   type SessionId,
   SessionIdSchema,
 } from "../domain/entities/session.entity.js";
 import { type User, UserIdSchema } from "../domain/entities/user.entity.js";
-import { env } from "../env.js";
+import {
+  SESSION_COOKIE_NAME,
+  sessionCookieOptions,
+} from "../infrastructure/cookie.js";
 import { GameStore } from "../infrastructure/persistence/game.store.js";
 import { SessionStore } from "../infrastructure/persistence/session.store.js";
 import { UserStore } from "../infrastructure/persistence/user.store.js";
@@ -24,6 +28,7 @@ export type Context = {
   prisma: PrismaClient;
   redisClient: Redis;
   gameStore: GameStore;
+  res: FastifyReply;
 };
 
 // ---------------------------------------------------------------------------
@@ -107,12 +112,7 @@ async function buildAnonymousContext(
     });
   }
 
-  ctx.res.setCookie("session", sessionId, {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-    secure: env.NODE_ENV === "production",
-  });
+  ctx.res.setCookie(SESSION_COOKIE_NAME, sessionId, sessionCookieOptions);
 
   logger.info({ userId, sessionId }, "Anonymous session created");
 
@@ -122,6 +122,7 @@ async function buildAnonymousContext(
     prisma: db,
     redisClient,
     gameStore: new GameStore(redisClient),
+    res: ctx.res,
   };
 }
 
@@ -134,7 +135,7 @@ export async function createContext(
 ): Promise<Context> {
   const logger = ctx.req.log;
   const redisClient = ctx.req.server.redis;
-  const rawCookie = ctx.req.cookies.session;
+  const rawCookie = ctx.req.cookies[SESSION_COOKIE_NAME];
   const gameStore = new GameStore(redisClient);
   const userStore = new UserStore(redisClient);
   const sessionStore = new SessionStore(redisClient);
@@ -220,5 +221,5 @@ export async function createContext(
 
   logger.debug({ userId: user.id, sessionId }, "Session resolved");
 
-  return { user, sessionId, prisma, redisClient, gameStore };
+  return { user, sessionId, prisma, redisClient, gameStore, res: ctx.res };
 }

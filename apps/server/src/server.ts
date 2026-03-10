@@ -1,5 +1,4 @@
-import type { FastifyCookieOptions } from "@fastify/cookie";
-import cookie from "@fastify/cookie";
+import cookie, { type FastifyCookieOptions } from "@fastify/cookie";
 import cors from "@fastify/cors";
 import redis, { type FastifyRedisPluginOptions } from "@fastify/redis";
 import {
@@ -9,6 +8,7 @@ import {
 import closeWithGrace from "close-with-grace";
 import Fastify from "fastify";
 import { env } from "./env.js";
+import { sessionCookieOptions } from "./infrastructure/cookie.js";
 import { pinoConfig } from "./infrastructure/logging/config.js";
 import { bindFastifyLogger } from "./infrastructure/logging/index.js";
 import { prisma } from "./infrastructure/prisma.js";
@@ -56,11 +56,7 @@ app.register(cors, {
 
 app.register(cookie, {
   secret: env.SECRET,
-  parseOptions: {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-  },
+  parseOptions: sessionCookieOptions,
 } satisfies FastifyCookieOptions);
 
 app.register(redis, {
@@ -77,6 +73,10 @@ app.register(fastifyTRPCPlugin, {
       app.log.error(error, `Error in tRPC handler on path '${path}'`);
     },
   } satisfies FastifyTRPCPluginOptions<AppRouter>["trpcOptions"],
+});
+
+app.get("/", () => {
+  return { status: "ok" };
 });
 
 app.get("/healthcheck", () => {
