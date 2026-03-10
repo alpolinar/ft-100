@@ -1,16 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   async rewrites() {
-    if (
-      process.env.NODE_ENV === "production" &&
-      process.env.NEXT_PUBLIC_API_URL
-    ) {
-      return [];
-    }
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
     return [
       {
         source: "/api/:path*", // Frontend requests to /api/...
-        destination: "http://localhost:3001/api/:path*", // Proxy to Fastify
+        destination: `${apiUrl}/api/:path*`, // Proxy to Backend
       },
     ];
   },

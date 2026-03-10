@@ -43,9 +43,12 @@ export function getQueryClient() {
 }
 
 const getBaseUrl = () => {
-  if (typeof window !== "undefined") return ""; // browser should use relative url
-  if (env.NEXT_PUBLIC_API_URL) return env.NEXT_PUBLIC_API_URL; // SSR should use absolute url
-  return `http://localhost:${env.PORT}`; // dev fallback
+  // If we have an explicit API URL (like Render), always use it (browser OR server)
+  if (env.NEXT_PUBLIC_API_URL) return env.NEXT_PUBLIC_API_URL;
+  // Browser dev fallback
+  if (typeof window !== "undefined") return "";
+  // SSR dev fallback
+  return `http://localhost:${env.PORT}`;
 };
 
 const baseUrl = getBaseUrl();
