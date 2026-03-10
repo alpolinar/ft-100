@@ -115,14 +115,15 @@ app.addHook("onClose", async () => {
   try {
     await redisClient.connect();
     await app.listen({
-      port: env.APP_PORT,
+      host: "0.0.0.0",
+      port: process.env.PORT ? Number(process.env.PORT) : env.APP_PORT,
     });
 
     app.log.info(`Server started in port: ${env.APP_PORT}`);
   } catch (error) {
     app.log.error(error, "Server failed to start");
 
-    await app.redis.quit();
+    await redisClient.quit();
     await prisma.$disconnect();
 
     process.exit(1);
