@@ -19,7 +19,7 @@
     "dev": "pnpm build & tsx watch src/server.ts",
     "build": "tsc -p tsconfig.build.json",
     "check-types": "tsc --noEmit",
-    "start": "node dist/src/server.js",
+    "start": "prisma migrate deploy && node dist/src/server.js",
     "test": "vitest run",
     "test:integration": "vitest run -c vitest.integration.config.ts",
     "clean": "rm -rf node_modules && rm -rf dist",
