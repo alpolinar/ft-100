@@ -18,6 +18,7 @@ import {
   sessionCookieOptions,
 } from "../infrastructure/cookie.js";
 import { GameStore } from "../infrastructure/persistence/game.store.js";
+import { MatchmakingStore } from "../infrastructure/persistence/matchmaking.store.js";
 import { SessionStore } from "../infrastructure/persistence/session.store.js";
 import { UserStore } from "../infrastructure/persistence/user.store.js";
 import { prisma } from "../infrastructure/prisma.js";
@@ -28,6 +29,7 @@ export type Context = {
   prisma: PrismaClient;
   redisClient: Redis;
   gameStore: GameStore;
+  matchmakingStore: MatchmakingStore;
   res: FastifyReply;
 };
 
@@ -122,6 +124,7 @@ async function buildAnonymousContext(
     prisma: db,
     redisClient,
     gameStore: new GameStore(redisClient),
+    matchmakingStore: new MatchmakingStore(redisClient),
     res: ctx.res,
   };
 }
@@ -221,5 +224,13 @@ export async function createContext(
 
   logger.debug({ userId: user.id, sessionId }, "Session resolved");
 
-  return { user, sessionId, prisma, redisClient, gameStore, res: ctx.res };
+  return {
+    user,
+    sessionId,
+    prisma,
+    redisClient,
+    gameStore,
+    matchmakingStore: new MatchmakingStore(redisClient),
+    res: ctx.res,
+  };
 }

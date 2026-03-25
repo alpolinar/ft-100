@@ -3,7 +3,6 @@ import { pipe } from "remeda";
 import z from "zod";
 import {
   type Game,
-  type LobbyType,
   PlayerIdSchema,
   type TurnType,
 } from "../../../domain/entities/game.entity.js";
@@ -16,8 +15,7 @@ import { logger } from "./shared.js";
 export const createGame = protectedProcedure
   .input(
     z.object({
-      lobbyType: z.enum<LobbyType[]>(["open", "invite"]),
-      invitedPlayerId: PlayerIdSchema,
+      invitedPlayerId: PlayerIdSchema.optional(),
     })
   )
   .mutation(async ({ input, ctx }): Promise<GameSlim> => {
@@ -29,7 +27,6 @@ export const createGame = protectedProcedure
     const newGame: Game = {
       id: crypto.randomUUID(),
       createdBy: currentPlayer,
-      lobbyType: input.lobbyType,
       invitedPlayerId: input.invitedPlayerId,
       currentTurn: arrayElement<TurnType>(["p1", "p2"]) ?? "p1",
       players: {

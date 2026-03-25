@@ -42,7 +42,6 @@ export const makeMove = protectedProcedure
               createdBy: newState.createdBy,
               invitedPlayerId: newState.invitedPlayerId ?? null,
               players: newState.players as Record<string, string>,
-              lobbyType: newState.lobbyType,
               currentTurn: newState.currentTurn,
               globalValue: newState.globalValue,
               status: newState.status,

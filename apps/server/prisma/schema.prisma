@@ -49,11 +49,6 @@ model Passkey {
   @@index([userId])
 }
 
-enum LobbyType {
-  open
-  invite
-}
-
 enum GameStatus {
   lobby
   countdown
@@ -67,7 +62,6 @@ model Game {
   createdBy       String
   invitedPlayerId String?
   players         Json
-  lobbyType       LobbyType
   currentTurn     String
   globalValue     Int
   status          GameStatus

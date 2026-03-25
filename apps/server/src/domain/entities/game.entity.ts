@@ -11,8 +11,6 @@ export type Players = Readonly<{
 
 export type GameStateStatus = "lobby" | "countdown" | "active" | "finished";
 
-export type LobbyType = "open" | "invite";
-
 export type TurnType = "p1" | "p2";
 
 export type Move = Readonly<{
@@ -27,7 +25,6 @@ export type Game = Readonly<{
   createdBy: PlayerId;
   invitedPlayerId?: PlayerId;
   players: Players;
-  lobbyType: LobbyType;
   currentTurn: TurnType;
   globalValue: number;
   status: GameStateStatus;

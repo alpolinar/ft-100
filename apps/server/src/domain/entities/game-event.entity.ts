@@ -2,7 +2,7 @@ import type { Game, PlayerId } from "./game.entity.js";
 
 export type GameSlim = Omit<
   Game,
-  "createdBy" | "version" | "createdAt" | "updatedAt" | "lobbyType"
+  "createdBy" | "version" | "createdAt" | "updatedAt"
 >;
 
 export type MoveCommand = {

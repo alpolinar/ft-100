@@ -1,4 +1,5 @@
 import { TRPCError } from "@trpc/server";
+import type { Redis } from "ioredis";
 import type {
   Game,
   Move,
@@ -167,3 +168,19 @@ export function convertGameStateToSlim(state: Game): GameSlim {
     moves: state.moves,
   };
 }
+
+/**
+ * Notify a waiting player that a match has been found.
+ * Publishes to the player-specific Redis pub/sub channel
+ * that `onMatchFound` subscriptions listen on.
+ */
+export async function notifyMatchFound(
+  redis: Redis,
+  playerId: string,
+  gameId: string
+): Promise<void> {
+  const channel = `matchmaking:${playerId}`;
+  await redis.publish(channel, JSON.stringify({ gameId }));
+  logger.info({ playerId, gameId }, "Match-found notification sent");
+}
+
