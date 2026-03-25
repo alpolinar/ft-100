@@ -34,7 +34,7 @@ export function usePasskey() {
   const logoutMutation = useMutation(trpc.user.logout.mutationOptions());
 
   const register = useCallback(
-    async (username: string, email?: string) => {
+    async (username: string, email: string) => {
       setIsLoading(true);
       setError(null);
       try {

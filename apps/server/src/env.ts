@@ -14,6 +14,8 @@ const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
   RP_ID: z.string().min(1).default("localhost"),
   RP_NAME: z.string().min(1).default("FT-100"),
+  RESEND_API_KEY: z.string().min(1),
+  EMAIL_FROM: z.string().min(1),
 });
 
 const env = process.env.SKIP_ENV_VALIDATION

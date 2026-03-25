@@ -6,6 +6,7 @@ import { TRPCError } from "@trpc/server";
 import z from "zod";
 import { env } from "../../../env.js";
 import { ChallengeStore } from "../../../infrastructure/persistence/challenge.store.js";
+import { EmailVerificationStore } from "../../../infrastructure/persistence/email-verification.store.js";
 import { protectedProcedure } from "../../trpc.js";
 
 // ---------------------------------------------------------------------------
@@ -56,12 +57,23 @@ export const verifyPasskeyRegistration = protectedProcedure
   .input(
     z.object({
       username: z.string().min(1).max(64),
-      email: z.email().optional(),
+      email: z.email(),
       response: z.any(), // The RegistrationResponseJSON from the browser
     })
   )
   .mutation(async ({ ctx, input }) => {
     const challengeStore = new ChallengeStore(ctx.redisClient);
+    const emailVerificationStore = new EmailVerificationStore(ctx.redisClient);
+
+    // Ensure the email was verified before allowing registration
+    const verifiedEntry = await emailVerificationStore.getVerified(ctx.user.id);
+    if (!verifiedEntry || verifiedEntry.email !== input.email) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message:
+          "Email has not been verified. Please verify your email before registering.",
+      });
+    }
 
     const expectedChallenge = await challengeStore.get(ctx.user.id);
     if (!expectedChallenge) {
@@ -111,13 +123,14 @@ export const verifyPasskeyRegistration = protectedProcedure
           type: "registered",
           username: input.username,
           lastLoginAt: new Date(),
-          ...(input.email ? { email: input.email } : {}),
+          email: input.email,
         },
       }),
     ]);
 
-    // Clean up the challenge
+    // Clean up the challenge and email verification state
     await challengeStore.delete(ctx.user.id);
+    await emailVerificationStore.delete(ctx.user.id);
 
     return { verified: true };
   });
