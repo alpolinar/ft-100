@@ -7,6 +7,7 @@ import { getMoveHistory } from "./get-move-history.js";
 import { joinGame } from "./join-game.js";
 import { makeMove } from "./make-move.js";
 import { onGameUpdate } from "./on-game-update.js";
+import { surrenderGame } from "./surrender-game.js";
 import { onMatchFound } from "./on-match-found.js";
 
 export const gameRouter = router({
@@ -19,4 +20,5 @@ export const gameRouter = router({
   findMatch,
   cancelMatch,
   onMatchFound,
+  surrenderGame,
 });

@@ -19,6 +19,9 @@ export function GameContainer({ gameId }: GameProps) {
   const [localGame, setLocalGame] = useState<GameEvent>();
 
   const makeMoveMutation = useMutation(trpc.game.makeMove.mutationOptions());
+  const surrenderMutation = useMutation(
+    trpc.game.surrenderGame.mutationOptions()
+  );
 
   const makeMove = (move: number) => {
     makeMoveMutation.mutate(
@@ -32,6 +35,20 @@ export function GameContainer({ gameId }: GameProps) {
         },
         onError: (err) => {
           console.log("error", err);
+        },
+      }
+    );
+  };
+
+  const surrender = () => {
+    surrenderMutation.mutate(
+      { gameId },
+      {
+        onSuccess: (data) => {
+          console.log("surrender successful", data);
+        },
+        onError: (err) => {
+          console.log("surrender error", err);
         },
       }
     );
@@ -80,6 +97,7 @@ export function GameContainer({ gameId }: GameProps) {
               <p>{current.globalValue}</p>
               <Game
                 onSubmit={makeMove}
+                onSurrender={surrender}
                 currentPlayerId={current.players[current.currentTurn]}
               />
             </div>
@@ -95,3 +113,4 @@ export function GameContainer({ gameId }: GameProps) {
     </div>
   );
 }
+

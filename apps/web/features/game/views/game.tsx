@@ -9,6 +9,7 @@ import { useTRPC } from "../../../lib/trpc";
 export type GameProps = Readonly<{
   currentPlayerId?: PlayerId;
   onSubmit: (value: number) => void;
+  onSurrender: () => void;
 }>;
 
 const ZFormSchema = z.object({
@@ -17,7 +18,7 @@ const ZFormSchema = z.object({
 
 type TFormSchema = z.infer<typeof ZFormSchema>;
 
-export function Game({ onSubmit, currentPlayerId }: GameProps) {
+export function Game({ onSubmit, onSurrender, currentPlayerId }: GameProps) {
   const trpc = useTRPC();
 
   console.log("currentPlayerId", currentPlayerId);
@@ -39,39 +40,45 @@ export function Game({ onSubmit, currentPlayerId }: GameProps) {
   });
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        form.handleSubmit();
-      }}
-    >
-      {myTurn ? (
-        <div style={{ display: "flex", gap: "16px" }}>
-          <form.Field name="move">
-            {({ name, state, handleBlur, handleChange }) => (
-              <input
-                name={name}
-                type="number"
-                value={state.value}
-                onBlur={handleBlur}
-                onChange={(e) => {
-                  handleChange(e.currentTarget.valueAsNumber);
-                }}
-              />
-            )}
-          </form.Field>
-          <form.Subscribe
-            selector={(state) => [state.isSubmitting, state.canSubmit]}
-          >
-            {() => {
-              return <button type="submit">make move</button>;
-            }}
-          </form.Subscribe>
-        </div>
-      ) : (
-        <p>waiting for other player</p>
-      )}
-    </form>
+    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          form.handleSubmit();
+        }}
+      >
+        {myTurn ? (
+          <div style={{ display: "flex", gap: "16px" }}>
+            <form.Field name="move">
+              {({ name, state, handleBlur, handleChange }) => (
+                <input
+                  name={name}
+                  type="number"
+                  value={state.value}
+                  onBlur={handleBlur}
+                  onChange={(e) => {
+                    handleChange(e.currentTarget.valueAsNumber);
+                  }}
+                />
+              )}
+            </form.Field>
+            <form.Subscribe
+              selector={(state) => [state.isSubmitting, state.canSubmit]}
+            >
+              {() => {
+                return <button type="submit">make move</button>;
+              }}
+            </form.Subscribe>
+          </div>
+        ) : (
+          <p>waiting for other player</p>
+        )}
+      </form>
+      <button type="button" onClick={onSurrender}>
+        Surrender
+      </button>
+    </div>
   );
 }
+

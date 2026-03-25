@@ -68,6 +68,31 @@ export function applyMove(state: Game, cmd: MoveCommand): Game {
   };
 }
 
+export function applySurrender(state: Game, surrenderingPlayerId: PlayerId): Game {
+  if (state.status !== "active") {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Game not active." });
+  }
+
+  const { p1, p2 } = state.players;
+
+  if (surrenderingPlayerId !== p1 && surrenderingPlayerId !== p2) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Player is not in this game.",
+    });
+  }
+
+  const winnerId = surrenderingPlayerId === p1 ? p2 : p1;
+
+  return {
+    ...state,
+    status: "finished",
+    winnerId,
+    version: state.version + 1,
+    updatedAt: new Date(),
+  };
+}
+
 export function startCountdown(gameStore: GameStore, game: Game, duration = 5) {
   logger.info({ id: game.id }, "Starting game countdown...");
   if (game.status !== "lobby" && game.status === "countdown") {
