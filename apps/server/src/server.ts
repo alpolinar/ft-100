@@ -16,11 +16,9 @@ import { redisClient } from "./infrastructure/redis.js";
 import { createContext } from "./trpc/context.js";
 import { type AppRouter, appRouter } from "./trpc/router.js";
 
-const allowedOrigins = [
-  env.CLIENT_ORIGIN.replace(/\/$/, ""), // strip trailing slash
-  "http://localhost:3000",
-  "http://127.0.0.1:3000",
-];
+const allowedOrigins = env.CLIENT_ORIGIN.split(",").map((origin) =>
+  origin.replace(/\/$/, "")
+); // strip trailing slash
 
 const app = Fastify({
   logger: pinoConfig,

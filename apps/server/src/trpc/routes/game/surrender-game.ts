@@ -35,7 +35,7 @@ export const surrenderGame = protectedProcedure
             id: newState.id,
             createdBy: newState.createdBy,
             invitedPlayerId: newState.invitedPlayerId ?? null,
-            players: newState.players as Record<string, string>,
+            players: newState.players,
             currentTurn: newState.currentTurn,
             globalValue: newState.globalValue,
             status: newState.status,

@@ -4,7 +4,17 @@ import z from "zod";
 const envSchema = z.object({
   NODE_ENV: z.enum(["test", "development", "staging", "production"]),
   APP_PORT: z.coerce.number().default(3001),
-  CLIENT_ORIGIN: z.url(),
+  CLIENT_ORIGIN: z
+    .string()
+    .min(1)
+    .refine(
+      (data) =>
+        data.split(",").every((origin) => z.url().safeParse(origin).success),
+      {
+        message: "CLIENT_ORIGIN must be a comma-separated list of valid URLs",
+        path: ["CLIENT_ORIGIN"],
+      }
+    ),
   SECRET: z.string().min(1),
   REDIS_SERVICE_HOST: z.string().optional(),
   REDIS_SERVICE_PORT: z.coerce.number().default(6379),
