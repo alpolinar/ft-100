@@ -123,7 +123,7 @@ export const verifyPasskeyAuthentication = protectedProcedure
     const verification = await verifyAuthenticationResponse({
       response: input.response,
       expectedChallenge,
-      expectedOrigin: env.CLIENT_ORIGIN,
+      expectedOrigin: env.CLIENT_ORIGIN.split(","),
       expectedRPID: env.RP_ID,
       credential: {
         id: passkey.id,

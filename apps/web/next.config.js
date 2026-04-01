@@ -11,7 +11,7 @@ const nextConfig = {
   },
   allowedDevOrigins: process.env.ALLOWED_DEV_ORIGINS?.split(",").map((origin) =>
     origin.trim()
-  ) ?? ["http://localhost:3000", "http://localhost:3001"],
+  ),
 };
 
 export default nextConfig;

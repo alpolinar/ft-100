@@ -87,7 +87,7 @@ export const verifyPasskeyRegistration = protectedProcedure
     const verification = await verifyRegistrationResponse({
       response: input.response,
       expectedChallenge,
-      expectedOrigin: env.CLIENT_ORIGIN,
+      expectedOrigin: env.CLIENT_ORIGIN.split(","),
       expectedRPID: env.RP_ID,
     });
 

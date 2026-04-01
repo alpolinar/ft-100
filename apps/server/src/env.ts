@@ -26,6 +26,7 @@ const envSchema = z.object({
   RP_NAME: z.string().min(1).default("FT-100"),
   RESEND_API_KEY: z.string().min(1),
   EMAIL_FROM: z.string().min(1),
+  SESSION_COOKIE_MAX_AGE: z.coerce.number().default(30 * 24 * 60 * 60), // 30 days
 });
 
 const env = process.env.SKIP_ENV_VALIDATION

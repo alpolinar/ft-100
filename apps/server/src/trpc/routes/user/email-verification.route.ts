@@ -27,6 +27,17 @@ export const sendEmailVerificationCode = protectedProcedure
     const store = new EmailVerificationStore(ctx.redisClient);
     const emailService = new EmailService();
 
+    const existingUser = await ctx.prisma.user.findUnique({
+      where: { email: input.email },
+    });
+
+    if (existingUser) {
+      throw new TRPCError({
+        code: "CONFLICT",
+        message: "This email is already registered. Please log in instead.",
+      });
+    }
+
     // Check if a code was recently sent (rate limiting via key existence)
     const existing = await store.getCode(ctx.user.id);
     if (existing && !existing.verified && existing.email === input.email) {

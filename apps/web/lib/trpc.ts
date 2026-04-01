@@ -43,12 +43,10 @@ export function getQueryClient() {
 }
 
 const getBaseUrl = () => {
-  // If we have an explicit API URL (like Render), always use it (browser OR server)
-  if (env.NEXT_PUBLIC_API_URL) return env.NEXT_PUBLIC_API_URL;
-  // Browser dev fallback
+  // Browser dev fallback: always use relative path so Next.js rewrites proxy the request
   if (typeof window !== "undefined") return "";
-  // SSR dev fallback
-  return `http://localhost:${env.PORT}`;
+  // SSR: If we have an explicit API URL (like Render), always use it
+  return env.NEXT_PUBLIC_API_URL;
 };
 
 const baseUrl = getBaseUrl();
