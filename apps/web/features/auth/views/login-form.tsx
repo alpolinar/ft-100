@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@repo/ui/components/button";
 import { useForm } from "@tanstack/react-form";
 import z from "zod";
 
@@ -86,9 +87,9 @@ export function LoginForm({ onSubmit, isLoading, error }: LoginFormProps) {
 
         <form.Subscribe selector={(state) => [state.canSubmit]}>
           {([canSubmit]) => (
-            <button type="submit" disabled={!canSubmit || isLoading}>
+            <Button type="submit" disabled={!canSubmit || isLoading}>
               {isLoading ? "Processing..." : "Sign In with Passkey"}
-            </button>
+            </Button>
           )}
         </form.Subscribe>
       </form>

@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@repo/ui/components/button";
 import { useForm } from "@tanstack/react-form";
 import z from "zod";
 
@@ -234,38 +235,30 @@ export function RegisterForm({
         {/* Action buttons */}
         <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
           {step === "details" && (
-            <button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading}>
               {isLoading ? "Sending..." : "Send Verification Code"}
-            </button>
+            </Button>
           )}
 
           {step === "verify" && (
             <>
-              <button type="submit" disabled={isLoading}>
+              <Button type="submit" disabled={isLoading}>
                 {isLoading ? "Verifying..." : "Verify Code"}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 disabled={isLoading}
                 onClick={() => onStepChange("details")}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "#666",
-                  cursor: "pointer",
-                  fontSize: "13px",
-                  textDecoration: "underline",
-                }}
               >
                 Change email
-              </button>
+              </Button>
             </>
           )}
 
           {step === "passkey" && (
-            <button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading}>
               {isLoading ? "Processing..." : "Register with Passkey"}
-            </button>
+            </Button>
           )}
         </div>
       </form>
