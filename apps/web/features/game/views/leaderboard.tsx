@@ -24,9 +24,7 @@ export default function LeaderBoard() {
 
   const joinGameMutation = useMutation(trpc.game.joinGame.mutationOptions());
 
-  const findMatchMutation = useMutation(
-    trpc.game.findMatch.mutationOptions()
-  );
+  const findMatchMutation = useMutation(trpc.game.findMatch.mutationOptions());
 
   const cancelMatchMutation = useMutation(
     trpc.game.cancelMatch.mutationOptions()
