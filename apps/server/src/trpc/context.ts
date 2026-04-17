@@ -14,8 +14,8 @@ import {
 } from "../domain/entities/session.entity.js";
 import { type User, UserIdSchema } from "../domain/entities/user.entity.js";
 import {
-  getSessionCookieOptions,
   SESSION_COOKIE_NAME,
+  sessionCookieOptions,
 } from "../infrastructure/cookie.js";
 import { GameStore } from "../infrastructure/persistence/game.store.js";
 import { MatchmakingStore } from "../infrastructure/persistence/matchmaking.store.js";
@@ -114,7 +114,7 @@ async function buildAnonymousContext(
     });
   }
 
-  ctx.res.setCookie(SESSION_COOKIE_NAME, sessionId, getSessionCookieOptions());
+  ctx.res.setCookie(SESSION_COOKIE_NAME, sessionId, sessionCookieOptions);
 
   logger.info({ userId, sessionId }, "Anonymous session created");
 

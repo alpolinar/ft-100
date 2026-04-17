@@ -1,18 +1,7 @@
 import { Resend } from "resend";
 import { env } from "../../env.js";
 
-let _resend: Resend | undefined;
-
-const resend = new Proxy({} as Resend, {
-  get(_target, prop, receiver) {
-    if (!_resend) {
-      _resend = new Resend(env.RESEND_API_KEY);
-    }
-    const value = Reflect.get(_resend, prop, receiver);
-    return typeof value === "function" ? value.bind(_resend) : value;
-  },
-});
-
+const resend = new Resend(env.RESEND_API_KEY);
 
 export class EmailService {
   /**

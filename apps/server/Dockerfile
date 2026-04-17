@@ -17,7 +17,7 @@ COPY --from=builder /app/out/full/apps/server/prisma/ ./apps/server/prisma/
 RUN pnpm install
 COPY --from=builder /app/out/full/ .
 # Generate Prisma client before building
-RUN pnpm --filter server db:generate
+RUN SKIP_ENV_VALIDATION=1 pnpm --filter server db:generate
 RUN pnpm turbo run build --filter=server
 
 FROM base AS runner
