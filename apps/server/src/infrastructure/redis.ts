@@ -6,14 +6,6 @@ const logger = getLogger();
 
 import type { RedisOptions } from "ioredis";
 
-const redisConfig: RedisOptions | string = env.REDIS_URL
-  ? env.REDIS_URL
-  : {
-      host: env.REDIS_SERVICE_HOST,
-      port: env.REDIS_SERVICE_PORT,
-      password: env.REDIS_PASSWORD || undefined,
-    };
-
 const commonOptions: RedisOptions = {
   maxRetriesPerRequest: null,
   lazyConnect: true,
@@ -21,17 +13,6 @@ const commonOptions: RedisOptions = {
     return Math.min(times * 50, 2_000);
   },
 };
-
-const createClient = () => {
-  if (typeof redisConfig === "string") {
-    return new Redis(redisConfig, commonOptions);
-  }
-  return new Redis({ ...redisConfig, ...commonOptions });
-};
-
-export const redisClient = createClient();
-export const pubClient = createClient();
-export const subClient = createClient();
 
 const setupEvents = (client: Redis, name: string) => {
   client.on("connect", () => logger.info(`Connected to Redis (${name})`));
@@ -43,6 +24,30 @@ const setupEvents = (client: Redis, name: string) => {
   );
 };
 
-setupEvents(redisClient, "main");
-setupEvents(pubClient, "pub");
-setupEvents(subClient, "sub");
+const createLazyClient = (name: string) => {
+  let _client: Redis | undefined;
+  return new Proxy({} as Redis, {
+    get(_target, prop, receiver) {
+      if (!_client) {
+        const redisConfig: RedisOptions | string = env.REDIS_URL
+          ? env.REDIS_URL
+          : {
+              host: env.REDIS_SERVICE_HOST,
+              port: env.REDIS_SERVICE_PORT,
+              password: env.REDIS_PASSWORD || undefined,
+            };
+        _client =
+          typeof redisConfig === "string"
+            ? new Redis(redisConfig, commonOptions)
+            : new Redis({ ...redisConfig, ...commonOptions });
+        setupEvents(_client, name);
+      }
+      const value = Reflect.get(_client, prop, receiver);
+      return typeof value === "function" ? value.bind(_client) : value;
+    },
+  });
+};
+
+export const redisClient = createLazyClient("main");
+export const pubClient = createLazyClient("pub");
+export const subClient = createLazyClient("sub");

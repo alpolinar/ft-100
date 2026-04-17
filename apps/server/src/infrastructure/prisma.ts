@@ -3,9 +3,18 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 import { env } from "../env.js";
 
-const connectionString = `${env.DATABASE_URL}`;
+let _prisma: PrismaClient | undefined;
 
-const adapter = new PrismaPg({ connectionString });
-const prisma = new PrismaClient({ adapter });
+const prisma = new Proxy({} as PrismaClient, {
+  get(_target, prop, receiver) {
+    if (!_prisma) {
+      const connectionString = `${env.DATABASE_URL}`;
+      const adapter = new PrismaPg({ connectionString });
+      _prisma = new PrismaClient({ adapter });
+    }
+    const value = Reflect.get(_prisma, prop, receiver);
+    return typeof value === "function" ? value.bind(_prisma) : value;
+  },
+});
 
 export { prisma };

@@ -8,7 +8,7 @@ import {
 import closeWithGrace from "close-with-grace";
 import Fastify from "fastify";
 import { env } from "./env.js";
-import { sessionCookieOptions } from "./infrastructure/cookie.js";
+import { getSessionCookieOptions } from "./infrastructure/cookie.js";
 import { pinoConfig } from "./infrastructure/logging/config.js";
 import { bindFastifyLogger } from "./infrastructure/logging/index.js";
 import { prisma } from "./infrastructure/prisma.js";
@@ -54,7 +54,7 @@ app.register(cors, {
 
 app.register(cookie, {
   secret: env.SECRET,
-  parseOptions: sessionCookieOptions,
+  parseOptions: getSessionCookieOptions(),
 } satisfies FastifyCookieOptions);
 
 app.register(redis, {

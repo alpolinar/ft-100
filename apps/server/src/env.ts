@@ -29,13 +29,22 @@ const envSchema = z.object({
   SESSION_COOKIE_MAX_AGE: z.coerce.number().default(30 * 24 * 60 * 60), // 30 days
 });
 
-const env = process.env.SKIP_ENV_VALIDATION
-  ? (process.env as unknown as z.infer<typeof envSchema>)
-  : envSchema
-      .refine((data) => data.REDIS_URL || data.REDIS_SERVICE_HOST, {
-        message: "Either REDIS_URL or REDIS_SERVICE_HOST must be provided",
-        path: ["REDIS_URL"],
-      })
-      .parse(process.env);
+type Env = z.infer<typeof envSchema>;
+
+let _env: Env | undefined;
+
+const env = new Proxy({} as Env, {
+  get(_, prop: keyof Env) {
+    if (!_env) {
+      _env = envSchema
+        .refine((data) => data.REDIS_URL || data.REDIS_SERVICE_HOST, {
+          message: "Either REDIS_URL or REDIS_SERVICE_HOST must be provided",
+          path: ["REDIS_URL"],
+        })
+        .parse(process.env);
+    }
+    return _env[prop as keyof Env];
+  },
+});
 
 export { env };
